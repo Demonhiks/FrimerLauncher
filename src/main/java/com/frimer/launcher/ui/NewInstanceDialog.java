@@ -72,7 +72,7 @@ public final class NewInstanceDialog extends JDialog {
 
         root.add(fieldLabel("Версия загрузчика"));
         styleCombo(loaderVerCombo);
-        loaderVerCombo.setEnabled(false);
+
         loaderVerCombo.addItem("последняя");
         root.add(loaderVerCombo);
         root.add(Box.createVerticalStrut(14));
@@ -124,7 +124,7 @@ public final class NewInstanceDialog extends JDialog {
         loaderCombo.addActionListener(e -> onLoaderChanged());
         mcCombo.addActionListener(e -> loadLoaderVersions());
 
-        setSize(new Dimension(420, 430));
+        setSize(new Dimension(430, 500));
         setResizable(false);
         setLocationRelativeTo(owner);
         loadVersions();
@@ -163,7 +163,7 @@ public final class NewInstanceDialog extends JDialog {
     private void onLoaderChanged() {
         String loader = (String) loaderCombo.getSelectedItem();
         boolean vanilla = "Vanilla".equals(loader);
-        loaderVerCombo.setEnabled(!vanilla);
+        loaderVerCombo.setEnabled(true);
         if (vanilla) {
             loaderVerCombo.removeAllItems();
             loaderVerCombo.addItem("последняя");

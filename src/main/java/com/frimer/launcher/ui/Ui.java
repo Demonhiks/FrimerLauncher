@@ -666,8 +666,17 @@ public final class Ui {
         }
         window.setLocation(x, y);
 
+        final long openedAt = System.currentTimeMillis();
         openMenuListener = event -> {
             if (!(event instanceof java.awt.event.MouseEvent press)) {
+                return;
+            }
+            // только нажатие: отпускание той же кнопки, которая открыла меню,
+            // прилетает уже после показа и не должно его закрывать
+            if (press.getID() != java.awt.event.MouseEvent.MOUSE_PRESSED) {
+                return;
+            }
+            if (System.currentTimeMillis() - openedAt < 200) {
                 return;
             }
             java.awt.Component source = press.getComponent();

@@ -65,7 +65,7 @@ public final class UiShots {
         List<Instance> instances = InstanceStore.loadAll();
         Instance instance = instances.isEmpty() ? null : instances.get(0);
 
-        capture(new NewInstanceDialog(frame, theme), "03-new-instance", 420, 430);
+        capture(new NewInstanceDialog(frame, theme), "03-new-instance", 430, 500);
         if (instance != null) {
             capture(new EditInstanceDialog(frame, theme, instance), "04-edit-instance", 420, 330);
         }
