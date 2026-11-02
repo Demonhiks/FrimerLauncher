@@ -506,11 +506,64 @@ public final class Ui {
     /** Слайдер в цветах темы. */
     public static javax.swing.JSlider slider(Theme theme, int min, int max, int value) {
         javax.swing.JSlider slider = new javax.swing.JSlider(min, max, value);
-        slider.setOpaque(false);
-        slider.setForeground(theme.accent);
-        slider.setBackground(theme.bg);
-        slider.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 4, 0));
+        styleSlider(slider, theme);
         return slider;
+    }
+
+    /** Перекрасить существующий слайдер (его нельзя создать с темой в поле класса). */
+    public static void styleSlider(javax.swing.JSlider slider, Theme theme) {
+        slider.setOpaque(false);
+        slider.setUI(new ThemedSliderUI(slider, theme));
+        slider.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
+    }
+
+    /** Слайдер со своей отрисовкой: иначе L&F рисует светлую дорожку и белый бегунок. */
+    private static final class ThemedSliderUI extends javax.swing.plaf.basic.BasicSliderUI {
+
+        private final Theme theme;
+
+        ThemedSliderUI(javax.swing.JSlider slider, Theme theme) {
+            super(slider);
+            this.theme = theme;
+        }
+
+        @Override
+        protected Dimension getThumbSize() {
+            return new Dimension(12, 18);
+        }
+
+        @Override
+        public void paintFocus(Graphics g) {
+            // фокусную рамку не рисуем
+        }
+
+        @Override
+        public void paintTrack(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int y = trackRect.y + trackRect.height / 2 - 2;
+            g2.setColor(theme.border);
+            g2.fillRoundRect(trackRect.x, y, trackRect.width, 4, 4, 4);
+            int filled = thumbRect.x + thumbRect.width / 2 - trackRect.x;
+            if (filled > 0) {
+                g2.setColor(theme.accent);
+                g2.fillRoundRect(trackRect.x, y, Math.min(filled, trackRect.width), 4, 4, 4);
+            }
+            g2.dispose();
+        }
+
+        @Override
+        public void paintThumb(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int height = Math.max(10, thumbRect.height - 4);
+            int y = thumbRect.y + (thumbRect.height - height) / 2;
+            g2.setColor(theme.accentLight);
+            g2.fillRoundRect(thumbRect.x, y, thumbRect.width, height, 5, 5);
+            g2.setColor(theme.accent);
+            g2.drawRoundRect(thumbRect.x, y, thumbRect.width - 1, height - 1, 5, 5);
+            g2.dispose();
+        }
     }
 
     /** Ряд кнопок, который переносится на новую строку при нехватке ширины. */

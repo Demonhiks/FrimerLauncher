@@ -78,9 +78,7 @@ public final class NewInstanceDialog extends JDialog {
         root.add(Box.createVerticalStrut(14));
 
         root.add(fieldLabel("Оперативная память"));
-        ramSlider.setOpaque(false);
-        ramSlider.setForeground(theme.accent);
-        ramSlider.setBackground(theme.bg);
+        Ui.styleSlider(ramSlider, theme);
         ramSlider.setMajorTickSpacing(4096);
         ramSlider.setMinorTickSpacing(512);
         ramSlider.setPaintTicks(false);

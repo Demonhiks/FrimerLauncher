@@ -101,9 +101,7 @@ public final class NewServerDialog extends JDialog {
         root.add(fieldLabel("Оперативная память"));
         ramSlider.setMinimum(1024);
         ramSlider.setMaximum(16384);
-        ramSlider.setOpaque(false);
-        ramSlider.setForeground(theme.accent);
-        ramSlider.setBackground(theme.bg);
+        Ui.styleSlider(ramSlider, theme);
         ramSlider.addChangeListener(e -> updateRamLabel());
         root.add(ramSlider);
         ramLabel.setFont(Theme.uiFont(Font.PLAIN, 12));

@@ -106,6 +106,21 @@ public final class UiShots {
         shot(menuWindow, "11-menu", menuWindow.getWidth(), menuWindow.getHeight());
         SwingUtilities.invokeAndWait(menuWindow::dispose);
 
+        SettingsDialog settingsDialog = new SettingsDialog(frame, theme);
+        SwingUtilities.invokeAndWait(() -> {
+            settingsDialog.setModal(false);
+            settingsDialog.setVisible(true);
+        });
+        Thread.sleep(500);
+        javax.swing.JComboBox<?> themeCombo = findCombo(settingsDialog.getContentPane());
+        if (themeCombo != null) {
+            SwingUtilities.invokeAndWait(() -> themeCombo.setPopupVisible(true));
+            Thread.sleep(600);
+            shot(settingsDialog, "13-settings-combo-open", 440, 430);
+            SwingUtilities.invokeAndWait(() -> themeCombo.setPopupVisible(false));
+        }
+        SwingUtilities.invokeAndWait(settingsDialog::dispose);
+
         NewServerDialog comboDialog = new NewServerDialog(frame, theme);
         SwingUtilities.invokeAndWait(() -> {
             comboDialog.setModal(false);

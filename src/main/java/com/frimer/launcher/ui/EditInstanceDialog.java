@@ -60,9 +60,7 @@ public final class EditInstanceDialog extends JDialog {
         ramSlider.setMinimum(1024);
         ramSlider.setMaximum(16384);
         ramSlider.setValue(Math.max(1024, Math.min(16384, instance.ramMb)));
-        ramSlider.setOpaque(false);
-        ramSlider.setForeground(theme.accent);
-        ramSlider.setBackground(theme.bg);
+        Ui.styleSlider(ramSlider, theme);
         ramSlider.addChangeListener(e -> updateRamLabel());
         root.add(ramSlider);
         ramLabel.setFont(Theme.uiFont(Font.PLAIN, 12));
