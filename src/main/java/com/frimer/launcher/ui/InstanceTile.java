@@ -3,12 +3,13 @@ package com.frimer.launcher.ui;
 import com.frimer.launcher.core.Instance;
 import com.frimer.launcher.core.Utils;
 import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.BorderFactory;
@@ -18,7 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-/** Плитка сборки в списке: бейдж загрузчика, название, версия, моды. */
+/** Плитка сборки: бейдж загрузчика, название, версия и число модов. */
 public final class InstanceTile extends Ui.Card {
 
     private static final long serialVersionUID = 1L;
@@ -32,27 +33,29 @@ public final class InstanceTile extends Ui.Card {
         void onMenu(Instance instance, java.awt.Point point);
     }
 
-    public static final Dimension SIZE = new Dimension(268, 66);
+    public static final Dimension SIZE = new Dimension(286, 74);
 
     private final Instance instance;
     private final Theme theme;
     private final JLabel nameLabel;
+    private final JLabel subLabel;
     private boolean selected;
 
     public InstanceTile(Instance instance, Theme theme, Handler handler) {
         super(theme.card, theme.border);
         this.instance = instance;
         this.theme = theme;
-        setRadius(8);
-        setLayout(new BorderLayout(12, 0));
-        setBorder(new EmptyBorder(8, 10, 8, 10));
+        setRadius(Theme.RADIUS_TILE);
+        setGradient(theme.cardTop(), theme.cardBottom());
+        setLayout(new BorderLayout(14, 0));
+        setBorder(new EmptyBorder(10, 12, 10, 12));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setPreferredSize(SIZE);
-        setMinimumSize(SIZE);
+        setMinimumSize(new Dimension(220, SIZE.height));
         setMaximumSize(new Dimension(Integer.MAX_VALUE, SIZE.height));
 
-        JLabel icon = new JLabel(iconFor(instance, theme));
-        icon.setPreferredSize(new Dimension(44, 44));
+        JLabel icon = new JLabel(iconFor(instance, theme, 46));
+        icon.setPreferredSize(new Dimension(46, 46));
         icon.setHorizontalAlignment(SwingConstants.CENTER);
         add(icon, BorderLayout.WEST);
 
@@ -64,21 +67,20 @@ public final class InstanceTile extends Ui.Card {
         nameLabel = new JLabel(instance.name);
         nameLabel.setFont(Theme.titleFont(Font.BOLD, 14));
         nameLabel.setForeground(theme.text);
-        nameLabel.setAlignmentX(0f);
+        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         int mods = Utils.countMods(instance.folder);
-        String sub = instance.loader + " " + instance.mcVersion;
-        if (mods > 0) {
-            sub += " · " + mods + " мод" + plural(mods);
-        }
-        JLabel subLabel = new JLabel(sub);
+        subLabel = new JLabel(instance.loader + " " + instance.mcVersion
+                + (mods > 0 ? "  ·  " + mods + " мод" + plural(mods) : ""));
         subLabel.setFont(Theme.uiFont(Font.PLAIN, 11));
         subLabel.setForeground(theme.muted);
-        subLabel.setAlignmentX(0f);
+        subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        text.add(javax.swing.Box.createVerticalGlue());
         text.add(nameLabel);
-        text.add(javax.swing.Box.createVerticalStrut(3));
+        text.add(javax.swing.Box.createVerticalStrut(4));
         text.add(subLabel);
+        text.add(javax.swing.Box.createVerticalGlue());
         add(text, BorderLayout.CENTER);
 
         addMouseListener(new MouseAdapter() {
@@ -97,18 +99,19 @@ public final class InstanceTile extends Ui.Card {
             @Override
             public void mouseEntered(MouseEvent e) {
                 if (!selected) {
-                    setFill(theme.hover);
+                    setGradient(theme.hover, theme.card);
+                    setStroke(theme.muted);
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
                 if (!selected) {
-                    setFill(theme.card);
+                    setGradient(theme.cardTop(), theme.cardBottom());
+                    setStroke(theme.border);
                 }
             }
         });
-        Ui.onHover(this, null, null);
     }
 
     public Instance instance() {
@@ -121,9 +124,19 @@ public final class InstanceTile extends Ui.Card {
 
     public void setSelected(boolean selected) {
         this.selected = selected;
-        setFill(selected ? theme.cardSel : theme.card);
-        setStroke(selected ? theme.accent : theme.border);
-        nameLabel.setForeground(selected ? theme.accent : theme.text);
+        if (selected) {
+            setGradient(theme.cardSel, theme.card);
+            setStroke(theme.accent);
+            setShadow(Ui.shadow(theme));
+            nameLabel.setForeground(theme.accent);
+            subLabel.setForeground(theme.text);
+        } else {
+            setGradient(theme.cardTop(), theme.cardBottom());
+            setStroke(theme.border);
+            setShadow(null);
+            nameLabel.setForeground(theme.text);
+            subLabel.setForeground(theme.muted);
+        }
     }
 
     private static String plural(int mods) {
@@ -143,21 +156,22 @@ public final class InstanceTile extends Ui.Card {
 
     /** Иконка сборки: своя icon.png либо бейдж загрузчика. */
     public static Icon iconFor(Instance instance, Theme theme) {
+        return iconFor(instance, theme, 44);
+    }
+
+    /** Иконка сборки нужного размера. */
+    public static Icon iconFor(Instance instance, Theme theme, int size) {
         Path custom = instance.folder.resolve("icon.png");
         if (Files.isRegularFile(custom)) {
             try {
-                Icon icon = Ui.imageIcon(Files.readAllBytes(custom), 44);
+                Icon icon = Ui.imageIcon(Files.readAllBytes(custom), size);
                 if (icon != null) {
                     return icon;
                 }
-            } catch (java.io.IOException ignored) {
+            } catch (IOException ignored) {
                 // падаем в бейдж загрузчика
             }
         }
-        return Ui.loaderBadge(instance.loader, theme, 44);
-    }
-
-    public static Color accentFor(Instance instance, Theme theme) {
-        return theme.loaderBg(instance.loader);
+        return Ui.loaderBadge(instance.loader, theme, size);
     }
 }

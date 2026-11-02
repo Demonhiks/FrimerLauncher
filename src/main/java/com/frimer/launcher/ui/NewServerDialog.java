@@ -34,7 +34,7 @@ public final class NewServerDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final Theme theme;
-    private final JTextField nameField = new JTextField("Мой сервер");
+    private final JTextField nameField;
     private final JComboBox<String> coreCombo = new JComboBox<>(
             new String[]{"Paper", "Vanilla", "Fabric", "Forge", "NeoForge"});
     private final JComboBox<String> mcCombo = new JComboBox<>();
@@ -49,6 +49,7 @@ public final class NewServerDialog extends JDialog {
     public NewServerDialog(JFrame owner, Theme theme) {
         super(owner, "Новый сервер", true);
         this.theme = theme;
+        nameField = new Ui.Field(theme, "Мой сервер");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel();
@@ -57,12 +58,7 @@ public final class NewServerDialog extends JDialog {
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
 
         root.add(fieldLabel("Название сервера"));
-        nameField.setBackground(theme.input);
-        nameField.setForeground(theme.text);
-        nameField.setCaretColor(theme.accent);
-        nameField.setFont(Theme.uiFont(Font.PLAIN, 14));
-        nameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(theme.border), new EmptyBorder(6, 8, 6, 8)));
+
         nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         nameField.setAlignmentX(Component.LEFT_ALIGNMENT);
         root.add(nameField);

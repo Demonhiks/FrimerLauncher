@@ -32,7 +32,7 @@ public final class NewInstanceDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final Theme theme;
-    private final JTextField nameField = new JTextField("Сборка");
+    private final JTextField nameField;
     private final JComboBox<String> loaderCombo =
             new JComboBox<>(new String[]{"Vanilla", "Fabric", "Quilt", "Forge", "NeoForge"});
     private final JComboBox<String> mcCombo = new JComboBox<>();
@@ -47,6 +47,7 @@ public final class NewInstanceDialog extends JDialog {
     public NewInstanceDialog(JFrame owner, Theme theme) {
         super(owner, "Новая сборка", true);
         this.theme = theme;
+        nameField = new Ui.Field(theme, "Сборка");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel();
@@ -55,7 +56,7 @@ public final class NewInstanceDialog extends JDialog {
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
 
         root.add(fieldLabel("Название сборки"));
-        styleField(nameField);
+
         root.add(nameField);
         root.add(Box.createVerticalStrut(12));
 

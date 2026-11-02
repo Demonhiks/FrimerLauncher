@@ -36,11 +36,14 @@ public final class Ui {
     private Ui() {
     }
 
-    /** Панель со скруглённым фоном и рамкой. */
+    /** Панель со скруглённым фоном, рамкой, тенью и градиентом. */
     public static class Card extends JPanel {
         private Color fill;
         private Color stroke;
-        private int radius = 10;
+        private Color gradientTop;
+        private Color gradientBottom;
+        private Color shadowColor;
+        private int radius = Theme.RADIUS_CARD;
 
         public Card(Color fill, Color stroke) {
             this.fill = fill;
@@ -64,11 +67,37 @@ public final class Ui {
             repaint();
         }
 
+        /** Вертикальный градиент вместо однотонной заливки. */
+        public void setGradient(Color top, Color bottom) {
+            this.gradientTop = top;
+            this.gradientBottom = bottom;
+            repaint();
+        }
+
+        /** Мягкая тень под карточкой (цвет с альфой). */
+        public void setShadow(Color shadow) {
+            this.shadowColor = shadow;
+        }
+
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fill);
+            if (shadowColor != null) {
+                for (int i = 4; i >= 1; i--) {
+                    int alpha = Math.max(4, shadowColor.getAlpha() / (i * 3));
+                    g2.setColor(new Color(shadowColor.getRed(), shadowColor.getGreen(),
+                            shadowColor.getBlue(), alpha));
+                    g2.fillRoundRect(i, i + 2, getWidth() - i * 2 - 1, getHeight() - i * 2 - 1,
+                            radius + 4, radius + 4);
+                }
+            }
+            if (gradientTop != null && gradientBottom != null) {
+                g2.setPaint(new java.awt.GradientPaint(0, 0, gradientTop, 0, getHeight(),
+                        gradientBottom));
+            } else {
+                g2.setColor(fill);
+            }
             g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
             if (stroke != null) {
                 g2.setColor(stroke);
@@ -78,6 +107,112 @@ public final class Ui {
             g2.dispose();
             super.paintComponent(g);
         }
+    }
+
+    /** Панель с вертикальным градиентом (сайдбар). */
+    public static class GradientPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+
+        private final Color top;
+        private final Color bottom;
+        private Color lineColor;
+
+        public GradientPanel(Color top, Color bottom) {
+            this.top = top;
+            this.bottom = bottom;
+            setOpaque(false);
+        }
+
+        /** Тонкая линия-разделитель по правому краю. */
+        public void setEdgeLine(Color color) {
+            this.lineColor = color;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setPaint(new java.awt.GradientPaint(0, 0, top, 0, getHeight(), bottom));
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            if (lineColor != null) {
+                g2.setColor(lineColor);
+                g2.drawLine(getWidth() - 1, 0, getWidth() - 1, getHeight());
+            }
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /** Пилюля с подписью: память, моды, версия загрузчика. */
+    public static class Chip extends JLabel {
+        private static final long serialVersionUID = 1L;
+
+        private final Color background;
+        private final Color border;
+
+        public Chip(String text, Theme theme, boolean accent) {
+            super(text);
+            this.background = accent ? theme.cardSel : theme.hover;
+            this.border = accent ? theme.accent : theme.border;
+            setOpaque(false);
+            setFont(Theme.uiFont(Font.PLAIN, 11));
+            setForeground(accent ? theme.accent : theme.muted);
+            setBorder(new EmptyBorder(3, 9, 3, 9));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int radius = Math.min(getHeight() - 1, 16);
+            g2.setColor(background);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+            g2.setColor(border);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    public static Chip chip(String text, Theme theme) {
+        return new Chip(text, theme, false);
+    }
+
+    public static Chip accentChip(String text, Theme theme) {
+        return new Chip(text, theme, true);
+    }
+
+    /** Заголовок секции: капс, разрядка, приглушённый цвет. */
+    public static JLabel sectionLabel(String text, Theme theme) {
+        JLabel label = new JLabel(text.toUpperCase(java.util.Locale.ROOT));
+        java.util.Map<java.awt.font.TextAttribute, Object> attrs = java.util.Map.of(
+                java.awt.font.TextAttribute.TRACKING, 0.16f);
+        label.setFont(Theme.uiFont(Font.BOLD, 10).deriveFont(attrs));
+        label.setForeground(theme.muted);
+        return label;
+    }
+
+    /** Логотип: акцентный скруглённый квадрат с буквой. */
+    public static ImageIcon logoMark(Theme theme, int size) {
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setPaint(new java.awt.GradientPaint(0, 0, theme.accentTop(), 0, size,
+                theme.accentBottom()));
+        g.fillRoundRect(0, 0, size - 1, size - 1, size / 3, size / 3);
+        g.setColor(new Color(36, 23, 3, 230));
+        g.setFont(Theme.titleFont(Font.BOLD, size * 0.58f));
+        String letter = "F";
+        int width = g.getFontMetrics().stringWidth(letter);
+        g.drawString(letter, (size - width) / 2f, size * 0.73f);
+        g.dispose();
+        return new ImageIcon(img);
+    }
+
+    /** Цвет мягкой тени для карточек. */
+    public static Color shadow(Theme theme) {
+        return new Color(0, 0, 0, theme.shadowAlpha());
     }
 
     /** Скруглённая плоская кнопка с наведением. */
@@ -124,15 +259,15 @@ public final class Ui {
     }
 
     public static JButton button(String text, Theme theme) {
-        return new FlatButton(text, theme.card, theme.hover, theme.text, theme.border, 6);
+        return new FlatButton(text, theme.card, theme.hover, theme.text, theme.border, Theme.RADIUS_BUTTON);
     }
 
     public static JButton primaryButton(String text, Theme theme) {
-        return new FlatButton(text, theme.accent, theme.accentLight, Theme.rgb("#241703"), null, 6);
+        return new FlatButton(text, theme.accentTop(), theme.accentLight, Theme.rgb("#241703"), null, Theme.RADIUS_BUTTON);
     }
 
     public static JButton miniButton(String text, Theme theme) {
-        JButton b = new FlatButton(text, new Color(0, 0, 0, 0), theme.hover, theme.muted, theme.border, 6);
+        JButton b = new FlatButton(text, new Color(0, 0, 0, 0), theme.hover, theme.muted, theme.border, Theme.RADIUS_BUTTON);
         b.setBorder(new EmptyBorder(4, 10, 4, 10));
         b.setFont(Theme.uiFont(Font.PLAIN, 13));
         return b;
@@ -443,7 +578,8 @@ public final class Ui {
             int y = (getHeight() - h) / 2;
             g2.setColor(theme.border);
             g2.fillRoundRect(0, y, w, h, h, h);
-            g2.setColor(theme.accent);
+            g2.setPaint(new java.awt.GradientPaint(0, 0, theme.accentTop(), Math.max(1, w), 0,
+                    theme.accentBottom()));
             if (indeterminate) {
                 int blockWidth = Math.max(24, w / 4);
                 int x = (int) ((w + blockWidth) * (sweep / 120.0)) - blockWidth;
@@ -575,6 +711,48 @@ public final class Ui {
             row.add(b);
         }
         return row;
+    }
+
+    /** Поле ввода со скруглённой рамкой в цветах темы. */
+    public static class Field extends javax.swing.JTextField {
+        private static final long serialVersionUID = 1L;
+
+        private final Theme theme;
+
+        public Field(Theme theme, String text) {
+            super(text);
+            this.theme = theme;
+            setOpaque(false);
+            setBorder(new EmptyBorder(7, 10, 7, 10));
+            setForeground(theme.text);
+            setCaretColor(theme.accent);
+            setFont(Theme.uiFont(Font.PLAIN, 14));
+            setSelectionColor(theme.cardSel);
+            setSelectedTextColor(theme.accent);
+            addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
+                public void focusGained(java.awt.event.FocusEvent e) {
+                    repaint();
+                }
+
+                @Override
+                public void focusLost(java.awt.event.FocusEvent e) {
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(theme.input);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+            g2.setColor(isFocusOwner() ? theme.accent : theme.border);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 
     // ------------------------------------------------------------- выпадающие меню

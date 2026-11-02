@@ -45,7 +45,7 @@ public final class ModrinthDialog extends JDialog {
     private final Path dest;
     private final Instance instance;
 
-    private final JTextField searchField = new JTextField();
+    private final JTextField searchField;
     private final DefaultListModel<Modrinth.Hit> model = new DefaultListModel<>();
     private final JList<Modrinth.Hit> list = new JList<>(model);
     private final JLabel statusLabel = new JLabel(" ");
@@ -59,6 +59,7 @@ public final class ModrinthDialog extends JDialog {
     public ModrinthDialog(JFrame owner, Theme theme, Instance instance, String projectType, Path dest) {
         super(owner, "Modrinth — " + Modrinth.labelFor(projectType), true);
         this.theme = theme;
+        searchField = new Ui.Field(theme, "");
         this.instance = instance;
         this.projectType = projectType;
         this.dest = dest;
@@ -87,13 +88,9 @@ public final class ModrinthDialog extends JDialog {
         head.add(context);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         context.setAlignmentX(Component.LEFT_ALIGNMENT);
+        head.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        searchField.setBackground(theme.input);
-        searchField.setForeground(theme.text);
-        searchField.setCaretColor(theme.accent);
-        searchField.setFont(Theme.uiFont(Font.PLAIN, 14));
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(theme.border), new EmptyBorder(7, 9, 7, 9)));
+
         searchField.addActionListener(e -> doSearch());
         JButton searchButton = Ui.primaryButton("Найти", theme);
         searchButton.addActionListener(e -> doSearch());
@@ -106,13 +103,16 @@ public final class ModrinthDialog extends JDialog {
         JPanel top = new JPanel();
         top.setOpaque(false);
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.add(head);
+        JPanel headWrap = new JPanel(new java.awt.BorderLayout());
+        headWrap.setOpaque(false);
+        headWrap.add(head, java.awt.BorderLayout.WEST);
+        top.add(headWrap);
         top.add(Box.createVerticalStrut(10));
         top.add(searchRow);
 
         list.setBackground(theme.card);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setFixedCellHeight(64);
+        list.setFixedCellHeight(70);
         list.setCellRenderer(new HitRenderer());
         list.addMouseListener(new MouseAdapter() {
             @Override

@@ -26,7 +26,7 @@ public final class EditInstanceDialog extends JDialog {
 
     private final Theme theme;
     private final Instance instance;
-    private final JTextField nameField = new JTextField();
+    private final JTextField nameField;
     private final JSlider ramSlider = new JSlider(1024, 16384, 4096);
     private final JLabel ramLabel = new JLabel();
     private final JLabel infoLabel = new JLabel();
@@ -35,6 +35,7 @@ public final class EditInstanceDialog extends JDialog {
     public EditInstanceDialog(JFrame owner, Theme theme, Instance instance) {
         super(owner, "Изменить сборку", true);
         this.theme = theme;
+        nameField = new Ui.Field(theme, instance.name);
         this.instance = instance;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -45,12 +46,7 @@ public final class EditInstanceDialog extends JDialog {
 
         root.add(fieldLabel("Название"));
         nameField.setText(instance.name);
-        nameField.setBackground(theme.input);
-        nameField.setForeground(theme.text);
-        nameField.setCaretColor(theme.accent);
-        nameField.setFont(Theme.uiFont(Font.PLAIN, 14));
-        nameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(theme.border), new EmptyBorder(6, 8, 6, 8)));
+
         nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         nameField.setAlignmentX(Component.LEFT_ALIGNMENT);
         root.add(nameField);

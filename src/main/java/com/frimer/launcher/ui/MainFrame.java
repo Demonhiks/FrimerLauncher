@@ -88,6 +88,10 @@ public final class MainFrame extends JFrame {
     private JLabel heroTitle;
     private JLabel heroSub;
     private JLabel heroStat;
+    private JPanel heroChips;
+    private JPanel contentPanel;
+    private JPanel titleBlock;
+    private JPanel actionRowPanel;
     private JLabel titleLabel;
     private JLabel subLabel;
     private JLabel statusLabel;
@@ -182,31 +186,90 @@ public final class MainFrame extends JFrame {
         repaint();
     }
 
-    /** Карточка выбранной сборки показывается только когда хватает места. */
+    /** Чипы под названием сборки: память, моды, последний запуск, загрузчик. */
+    private void updateHeroChips(Instance inst) {
+        if (heroChips == null) {
+            return;
+        }
+        heroChips.removeAll();
+        heroChips.add(Ui.chip(Utils.fmtGb(inst.ramMb) + " RAM", theme));
+        int mods = Utils.countMods(inst.folder);
+        heroChips.add(Ui.chip(mods + " модов", theme));
+        if (!inst.lastPlayed().isEmpty()) {
+            heroChips.add(Ui.chip("был(а) " + inst.lastPlayed(), theme));
+        }
+        heroChips.add(Ui.accentChip(inst.loader + " " + inst.mcVersion, theme));
+        heroChips.revalidate();
+        heroChips.repaint();
+    }
+
+    /**
+     * Карточка выбранной сборки показывается только когда хватает места.
+     * Если карточка видна, дублирующие название и подпись скрываются,
+     * а главная кнопка «Играть» остаётся одна — внутри карточки.
+     */
     private void updateHeroVisibility() {
         if (heroCard == null) {
             return;
         }
-        heroCard.setVisible(!serverTab && current != null && getWidth() >= 900);
+        boolean show = !serverTab && current != null && getWidth() >= 900;
+        heroCard.setVisible(show);
+        if (contentPanel != null && titleBlock != null) {
+            if (show) {
+                contentPanel.remove(titleBlock);
+            } else if (titleBlock.getParent() == null) {
+                int index = 0;
+                for (int i = 0; i < contentPanel.getComponentCount(); i++) {
+                    if (contentPanel.getComponent(i) == heroCard) {
+                        index = i + 2;
+                        break;
+                    }
+                }
+                contentPanel.add(titleBlock, Math.min(index, contentPanel.getComponentCount()));
+            }
+        }
+        if (actionRowPanel != null && playButton != null) {
+            if (show) {
+                actionRowPanel.remove(playButton);
+            } else if (playButton.getParent() == null) {
+                actionRowPanel.add(playButton, 0);
+            }
+        }
+        if (contentPanel != null) {
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        }
     }
 
     // =================================================================== сайдбар
 
     private JPanel buildSidebar() {
-        JPanel sidebar = new JPanel();
+        Ui.GradientPanel sidebar = new Ui.GradientPanel(theme.sidebar, theme.bg);
+        sidebar.setEdgeLine(theme.border);
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(theme.sidebar);
-        sidebar.setPreferredSize(new Dimension(300, 0));
-        sidebar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 0, 1, theme.border),
-                new EmptyBorder(22, 20, 18, 20)));
+        sidebar.setPreferredSize(new Dimension(304, 0));
+        sidebar.setBorder(new EmptyBorder(20, 18, 16, 18));
 
-        JLabel title = new JLabel("Frimer");
-        title.setFont(Theme.titleFont(Font.BOLD, 26));
-        title.setForeground(theme.accent);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        sidebar.add(title);
-        sidebar.add(Box.createVerticalStrut(14));
+        JPanel brandRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 0));
+        brandRow.setOpaque(false);
+        brandRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        brandRow.add(new JLabel(Ui.logoMark(theme, 34)));
+        JLabel brand = new JLabel("Frimer");
+        brand.setFont(Theme.titleFont(Font.BOLD, 24));
+        brand.setForeground(theme.text);
+        brandRow.add(brand);
+        sidebar.add(brandRow);
+
+        JLabel tagline = Ui.label("Minecraft launcher", Theme.uiFont(Font.PLAIN, 11), theme.muted);
+        tagline.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tagline.setBorder(new EmptyBorder(0, 4, 0, 0));
+        sidebar.add(tagline);
+        sidebar.add(Box.createVerticalStrut(18));
+
+        JLabel accountLabel = Ui.sectionLabel("Аккаунт", theme);
+        accountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(accountLabel);
+        sidebar.add(Box.createVerticalStrut(6));
 
         nickButton = Ui.button("", theme);
         nickButton.setHorizontalAlignment(SwingConstants.LEFT);
@@ -220,42 +283,53 @@ public final class MainFrame extends JFrame {
         JButton folderButton = Ui.miniButton("Папка", theme);
         folderButton.addActionListener(e -> openCurrentFolder());
 
-        JPanel nickRow = Ui.buttonRow(nickButton, skinsButton, folderButton);
+        JPanel nickRow = new JPanel(new java.awt.BorderLayout());
+        nickRow.setOpaque(false);
         nickRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        nickRow.add(nickButton, java.awt.BorderLayout.CENTER);
         sidebar.add(nickRow);
-        sidebar.add(Box.createVerticalStrut(14));
+        sidebar.add(Box.createVerticalStrut(6));
+
+        JPanel nickTools = Ui.buttonRow(skinsButton, folderButton);
+        nickTools.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(nickTools);
+        sidebar.add(Box.createVerticalStrut(18));
 
         tabInstButton = tabButton("Инстансы", true);
         tabSrvButton = tabButton("Серверы", false);
         tabInstButton.addActionListener(e -> switchTab(false));
         tabSrvButton.addActionListener(e -> switchTab(true));
 
-        JPanel tabRow = new JPanel();
-        tabRow.setOpaque(false);
-        tabRow.setLayout(new BoxLayout(tabRow, BoxLayout.X_AXIS));
-        tabRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tabRow.add(tabInstButton);
-        tabRow.add(Box.createHorizontalStrut(6));
-        tabRow.add(tabSrvButton);
-        tabRow.add(Box.createHorizontalGlue());
-        sidebar.add(tabRow);
-        sidebar.add(Box.createVerticalStrut(12));
+        Ui.Card tabCard = new Ui.Card(theme.input, theme.border);
+        tabCard.setRadius(11);
+        tabCard.setLayout(new java.awt.GridLayout(1, 2, 4, 0));
+        tabCard.setBorder(new EmptyBorder(4, 4, 4, 4));
+        tabCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        tabCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tabCard.add(tabInstButton);
+        tabCard.add(tabSrvButton);
+        sidebar.add(tabCard);
+        sidebar.add(Box.createVerticalStrut(18));
 
-        sectionLabel = Ui.label("Инстансы", Theme.uiFont(Font.PLAIN, 12), theme.muted);
+        sectionLabel = Ui.sectionLabel("Инстансы", theme);
         sectionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(sectionLabel);
-        sidebar.add(Box.createVerticalStrut(6));
+        sidebar.add(Box.createVerticalStrut(8));
 
-        newInstButton = Ui.miniButton("Создать", theme);
+        newInstButton = Ui.primaryButton("Создать", theme);
         newInstButton.addActionListener(e -> createInstance());
         delInstButton = Ui.miniButton("Удалить", theme);
         delInstButton.addActionListener(e -> deleteCurrentInstance());
         settingsButton = Ui.miniButton("Настройки", theme);
         settingsButton.addActionListener(e -> openSettings());
 
-        JPanel instRow = Ui.buttonRow(newInstButton, delInstButton, settingsButton);
+        JPanel instRow = Ui.buttonRow(newInstButton, delInstButton);
         instRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(instRow);
+        sidebar.add(Box.createVerticalStrut(6));
+
+        settingsButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(settingsButton);
         sidebar.add(Box.createVerticalStrut(6));
 
         importButton = Ui.miniButton("Импорт .mrpack", theme);
@@ -263,30 +337,35 @@ public final class MainFrame extends JFrame {
         importButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(importButton);
 
-        newSrvButton = Ui.miniButton("Создать сервер", theme);
+        newSrvButton = Ui.primaryButton("Создать сервер", theme);
         newSrvButton.addActionListener(e -> createServer());
         delSrvButton = Ui.miniButton("Удалить сервер", theme);
         delSrvButton.addActionListener(e -> deleteCurrentServer());
 
-        JPanel srvRow = Ui.buttonRow(newSrvButton, delSrvButton);
-        srvRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        sidebar.add(srvRow);
+        newSrvButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(newSrvButton);
+        sidebar.add(Box.createVerticalStrut(6));
+
+        delSrvButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(delSrvButton);
 
         sidebar.add(Box.createVerticalGlue());
-        JLabel version = Ui.label("Frimer " + AppSettings.APP_VERSION, Theme.uiFont(Font.PLAIN, 11),
-                new Color(theme.muted.getRed(), theme.muted.getGreen(), theme.muted.getBlue(), 160));
-        version.setAlignmentX(Component.LEFT_ALIGNMENT);
-        sidebar.add(version);
 
-        // BoxLayout по вертикали растягивает детей до maximumSize - фиксируем высоты,
-        // иначе кнопки расползаются на пол-экрана.
+        JPanel footer = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        footer.setOpaque(false);
+        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        footer.add(Ui.chip("Frimer " + AppSettings.APP_VERSION, theme));
+        sidebar.add(footer);
+
+        // BoxLayout по вертикали растягивает детей до maximumSize - фиксируем высоты.
         for (Component c : sidebar.getComponents()) {
             if (c instanceof JButton button) {
-                button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-                button.setMinimumSize(new Dimension(0, 26));
+                button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+                button.setMinimumSize(new Dimension(0, 28));
             } else if (c instanceof JPanel row) {
                 int preferred = Math.max(30, row.getPreferredSize().height);
-                row.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred));
+                // при нехватке ширины FlowLayout переносит кнопки на вторую строку
+                row.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred + 34));
                 row.setMinimumSize(new Dimension(0, preferred));
                 row.setAlignmentX(Component.LEFT_ALIGNMENT);
             } else if (c instanceof JLabel label) {
@@ -301,7 +380,7 @@ public final class MainFrame extends JFrame {
     private JButton tabButton(String text, boolean active) {
         Ui.SegmentButton button = new Ui.SegmentButton(text, theme);
         button.setActive(active);
-        button.setMaximumSize(new Dimension(120, 32));
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         return button;
     }
 
@@ -317,30 +396,35 @@ public final class MainFrame extends JFrame {
         JPanel content = new JPanel();
         content.setBackground(theme.bg);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(22, 26, 18, 26));
+        content.setBorder(new EmptyBorder(24, 28, 20, 28));
 
+        contentPanel = content;
         heroCard = buildHero();
         heroCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-        updateHeroVisibility();
         content.add(heroCard);
-        content.add(Box.createVerticalStrut(12));
+        content.add(Box.createVerticalStrut(16));
 
-        titleLabel = Ui.label("Инстанс не выбран", Theme.titleFont(Font.BOLD, 22), theme.text);
+        titleLabel = Ui.label("Инстанс не выбран", Theme.titleFont(Font.BOLD, 24), theme.text);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(titleLabel);
-
         subLabel = Ui.label("Создай инстанс кнопкой «Создать»", Theme.uiFont(Font.PLAIN, 13), theme.muted);
         subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(subLabel);
-        content.add(Box.createVerticalStrut(10));
+        titleBlock = new JPanel();
+        titleBlock.setOpaque(false);
+        titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
+        titleBlock.add(titleLabel);
+        titleBlock.add(Box.createVerticalStrut(4));
+        titleBlock.add(subLabel);
+        titleBlock.add(Box.createVerticalStrut(14));
+        content.add(titleBlock);
+        updateHeroVisibility();
 
         progressBar = new Ui.MiniBar(theme);
-        progressBar.setPreferredSize(new Dimension(0, 6));
-        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 6));
-        progressBar.setMinimumSize(new Dimension(40, 6));
+        progressBar.setPreferredSize(new Dimension(0, 8));
+        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 8));
+        progressBar.setMinimumSize(new Dimension(40, 8));
         progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(progressBar);
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(10));
 
         JPanel statusRow = new JPanel();
         statusRow.setOpaque(false);
@@ -353,20 +437,20 @@ public final class MainFrame extends JFrame {
         statusRow.add(Box.createHorizontalGlue());
         statusRow.add(progressLabel);
         content.add(statusRow);
-        content.add(Box.createVerticalStrut(10));
+        content.add(Box.createVerticalStrut(12));
 
-        tilesPanel = new WrapPanel(10);
+        tilesPanel = new WrapPanel(12);
         tilesPanel.setBackground(theme.bg);
         tilesScroll = Ui.borderlessScroll(tilesPanel, theme);
         tilesScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(tilesScroll);
 
-        content.add(Box.createVerticalStrut(10));
+        content.add(Box.createVerticalStrut(12));
 
         playButton = Ui.primaryButton("Играть", theme);
         playButton.setFont(Theme.titleFont(Font.BOLD, 16));
-        playButton.setPreferredSize(new Dimension(190, 42));
-        playButton.setMaximumSize(new Dimension(190, 42));
+        playButton.setPreferredSize(new Dimension(200, 46));
+        playButton.setMaximumSize(new Dimension(200, 46));
         playButton.setEnabled(false);
         playButton.addActionListener(e -> play());
 
@@ -376,8 +460,8 @@ public final class MainFrame extends JFrame {
 
         startSrvButton = Ui.primaryButton("Запустить сервер", theme);
         startSrvButton.setFont(Theme.titleFont(Font.BOLD, 15));
-        startSrvButton.setPreferredSize(new Dimension(190, 42));
-        startSrvButton.setMaximumSize(new Dimension(190, 42));
+        startSrvButton.setPreferredSize(new Dimension(200, 46));
+        startSrvButton.setMaximumSize(new Dimension(200, 46));
         startSrvButton.setVisible(false);
         startSrvButton.setEnabled(false);
         startSrvButton.addActionListener(e -> startServer());
@@ -404,10 +488,10 @@ public final class MainFrame extends JFrame {
         logToggle.addActionListener(e -> toggleLog(logToggle));
 
         for (JButton b : new JButton[]{playButton, startSrvButton, stopSrvButton}) {
-            b.setMinimumSize(new Dimension(120, 42));
+            b.setMinimumSize(new Dimension(130, 46));
         }
         for (JButton b : new JButton[]{consoleButton, copyAddrButton, killButton}) {
-            b.setMinimumSize(new Dimension(96, 36));
+            b.setMinimumSize(new Dimension(100, 40));
         }
         logToggle.setMinimumSize(new Dimension(84, 30));
 
@@ -415,7 +499,7 @@ public final class MainFrame extends JFrame {
         actionRow.setOpaque(false);
         actionRow.setLayout(new BoxLayout(actionRow, BoxLayout.X_AXIS));
         actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        actionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        actionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         actionRow.add(playButton);
         actionRow.add(Box.createHorizontalStrut(8));
         actionRow.add(startSrvButton);
@@ -429,8 +513,9 @@ public final class MainFrame extends JFrame {
         actionRow.add(killButton);
         actionRow.add(Box.createHorizontalGlue());
         actionRow.add(logToggle);
+        actionRowPanel = actionRow;
         content.add(actionRow);
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(10));
 
         logArea = Ui.logArea(theme);
         logScroll = Ui.scroll(logArea, theme);
@@ -445,39 +530,56 @@ public final class MainFrame extends JFrame {
 
     private Ui.Card buildHero() {
         Ui.Card hero = new Ui.Card(theme.card, theme.border);
-        hero.setRadius(12);
+        hero.setRadius(14);
+        hero.setGradient(theme.cardTop(), theme.cardBottom());
+        hero.setShadow(Ui.shadow(theme));
         hero.setLayout(new BorderLayout(16, 0));
         hero.setBorder(new EmptyBorder(12, 16, 12, 16));
-        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 96));
-        hero.setPreferredSize(new Dimension(10, 96));
+        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 104));
+        hero.setPreferredSize(new Dimension(10, 104));
 
         heroIcon = new JLabel();
-        heroIcon.setPreferredSize(new Dimension(64, 64));
         heroIcon.setHorizontalAlignment(SwingConstants.CENTER);
-        hero.add(heroIcon, BorderLayout.WEST);
+        Ui.Card iconBox = new Ui.Card(theme.input, theme.border);
+        iconBox.setRadius(14);
+        iconBox.setLayout(new java.awt.BorderLayout());
+        iconBox.setBorder(new EmptyBorder(6, 6, 6, 6));
+        iconBox.setPreferredSize(new Dimension(72, 72));
+        iconBox.setMaximumSize(new Dimension(72, 72));
+        iconBox.add(heroIcon, java.awt.BorderLayout.CENTER);
+        JPanel iconWrap = new JPanel(new java.awt.BorderLayout());
+        iconWrap.setOpaque(false);
+        iconWrap.add(iconBox, java.awt.BorderLayout.CENTER);
+        hero.add(iconWrap, BorderLayout.WEST);
 
         JPanel text = new JPanel();
         text.setOpaque(false);
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
-        heroTitle = Ui.label("", Theme.titleFont(Font.BOLD, 20), theme.text);
+        heroTitle = Ui.label("", Theme.titleFont(Font.BOLD, 21), theme.text);
         heroSub = Ui.label("", Theme.uiFont(Font.PLAIN, 13), theme.muted);
         heroStat = Ui.label("", Theme.uiFont(Font.PLAIN, 12), theme.muted);
+        heroStat.setVisible(false);
+        heroChips = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        heroChips.setOpaque(false);
+        heroChips.setAlignmentX(Component.LEFT_ALIGNMENT);
+        heroTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        heroSub.setAlignmentX(Component.LEFT_ALIGNMENT);
         text.add(Box.createVerticalGlue());
         text.add(heroTitle);
-        text.add(Box.createVerticalStrut(2));
+        text.add(Box.createVerticalStrut(4));
         text.add(heroSub);
-        text.add(Box.createVerticalStrut(2));
-        text.add(heroStat);
+        text.add(Box.createVerticalStrut(8));
+        text.add(heroChips);
         text.add(Box.createVerticalGlue());
         hero.add(text, BorderLayout.CENTER);
 
         JButton heroPlay = Ui.primaryButton("Играть", theme);
         heroPlay.setFont(Theme.titleFont(Font.BOLD, 15));
-        heroPlay.setPreferredSize(new Dimension(140, 44));
+        heroPlay.setPreferredSize(new Dimension(150, 46));
         heroPlay.addActionListener(e -> play());
         JPanel wrap = new JPanel(new java.awt.BorderLayout());
         wrap.setOpaque(false);
-        wrap.setBorder(new EmptyBorder(10, 0, 10, 0));
+        wrap.setBorder(new EmptyBorder(8, 0, 8, 0));
         wrap.add(heroPlay, java.awt.BorderLayout.CENTER);
         hero.add(wrap, BorderLayout.EAST);
         return hero;
@@ -595,8 +697,9 @@ public final class MainFrame extends JFrame {
 
     private JComponent serverTile(ServerInstance srv) {
         Ui.Card card = new Ui.Card(theme.card, theme.border);
-        card.setRadius(8);
-        card.setLayout(new BorderLayout(12, 0));
+        card.setRadius(12);
+        card.setGradient(theme.cardTop(), theme.cardBottom());
+        card.setLayout(new BorderLayout(14, 0));
         card.setBorder(new EmptyBorder(8, 10, 8, 10));
         card.setPreferredSize(InstanceTile.SIZE);
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, InstanceTile.SIZE.height));
@@ -622,8 +725,9 @@ public final class MainFrame extends JFrame {
         card.add(text, BorderLayout.CENTER);
 
         if (currentServer != null && currentServer.folder.equals(srv.folder)) {
-            card.setFill(theme.cardSel);
+            card.setGradient(theme.cardSel, theme.card);
             card.setStroke(theme.accent);
+            card.setShadow(Ui.shadow(theme));
         }
 
         card.addMouseListener(new MouseAdapter() {
@@ -638,14 +742,14 @@ public final class MainFrame extends JFrame {
             @Override
             public void mouseEntered(MouseEvent e) {
                 if (currentServer == null || !currentServer.folder.equals(srv.folder)) {
-                    card.setFill(theme.hover);
+                    card.setGradient(theme.hover, theme.card);
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
                 if (currentServer == null || !currentServer.folder.equals(srv.folder)) {
-                    card.setFill(theme.card);
+                    card.setGradient(theme.cardTop(), theme.cardBottom());
                 }
             }
         });
@@ -667,15 +771,10 @@ public final class MainFrame extends JFrame {
                 + Utils.fmtGb(inst.ramMb) + " RAM — " + Utils.countMods(inst.folder)
                 + " модов — играл: " + Utils.fmtDuration(inst.playedSeconds()));
 
-        heroIcon.setIcon(InstanceTile.iconFor(inst, theme));
+        heroIcon.setIcon(InstanceTile.iconFor(inst, theme, 56));
         heroTitle.setText(inst.name);
         heroSub.setText(inst.loader + " " + inst.mcVersion);
-        StringBuilder stat = new StringBuilder(Utils.fmtGb(inst.ramMb));
-        stat.append(" · ").append(Utils.countMods(inst.folder)).append(" модов");
-        if (!inst.lastPlayed().isEmpty()) {
-            stat.append(" · последний запуск: ").append(inst.lastPlayed());
-        }
-        heroStat.setText(stat.toString());
+        updateHeroChips(inst);
         updateHeroVisibility();
         playButton.setEnabled(!gameRunning);
         setStatus("Готов");
@@ -719,7 +818,7 @@ public final class MainFrame extends JFrame {
         serverTab = toServers;
         updateTabStyle(tabInstButton, !toServers);
         updateTabStyle(tabSrvButton, toServers);
-        sectionLabel.setText(toServers ? "Серверы" : "Инстансы");
+        sectionLabel.setText(toServers ? "СЕРВЕРЫ" : "ИНСТАНСЫ");
 
         newInstButton.setVisible(!toServers);
         delInstButton.setVisible(!toServers);

@@ -51,14 +51,43 @@ public final class Theme {
     }
 
     public static final Theme DARK = new Theme("dark",
-            "#15181e", "#1d2129", "#232833", "#3a3222", "#2c323d",
-            "#dfe3ea", "#8a93a3", "#f2a93b", "#b8791a", "#ffbd52",
-            "#15181e", "#ff6b6b", "#ffcc66", "#7ad47a", "#2a3040", "#5a6170");
+            "#0f1216", "#14181e", "#1a1f27", "#3a2f16", "#232a34",
+            "#e8ecf2", "#8b96a8", "#ffab2e", "#c47a12", "#ffc45c",
+            "#12161b", "#ff6b6b", "#ffcc66", "#7ad47a", "#212734", "#5b657a");
 
     public static final Theme LIGHT = new Theme("light",
-            "#f4f5f7", "#ffffff", "#ffffff", "#fff3d9", "#d8dce4",
-            "#232833", "#6d7686", "#e08a1c", "#a56410", "#ffb84d",
-            "#ffffff", "#c0392b", "#a56b00", "#2e7d32", "#f0f2f6", "#9aa1ad");
+            "#f2f4f8", "#ffffff", "#ffffff", "#fff1d6", "#e1e6ee",
+            "#1b2130", "#6b7688", "#e8890c", "#b36608", "#ffb04d",
+            "#f7f9fc", "#c0392b", "#a56b00", "#2e7d32", "#eef2f8", "#9aa3b2");
+
+    /** Радиусы скруглений: карточки, кнопки, поля ввода. */
+    public static final int RADIUS_CARD = 12;
+    public static final int RADIUS_TILE = 12;
+    public static final int RADIUS_BUTTON = 8;
+    public static final int RADIUS_INPUT = 8;
+
+    /** Мягкая тень под карточками (альфа). */
+    public int shadowAlpha() {
+        return "light".equals(name) ? 26 : 90;
+    }
+
+    /** Верхний и нижний цвет карточки-градиента. */
+    public Color cardTop() {
+        return "light".equals(name) ? Theme.rgb("#ffffff") : Theme.rgb("#1e242e");
+    }
+
+    public Color cardBottom() {
+        return "light".equals(name) ? Theme.rgb("#f7f9fc") : Theme.rgb("#171c24");
+    }
+
+    /** Градиент акцентной кнопки. */
+    public Color accentTop() {
+        return "light".equals(name) ? Theme.rgb("#f59b1c") : Theme.rgb("#ffb644");
+    }
+
+    public Color accentBottom() {
+        return "light".equals(name) ? Theme.rgb("#e07f08") : Theme.rgb("#f29a16");
+    }
 
     public static Theme of(String name) {
         return "light".equalsIgnoreCase(name) ? LIGHT : DARK;

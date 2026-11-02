@@ -27,7 +27,7 @@ public final class SettingsDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final Theme theme;
-    private final JTextField nickField = new JTextField(AppSettings.nickname());
+    private final JTextField nickField;
     private final JComboBox<String> themeCombo = new JComboBox<>(new String[]{"dark", "light"});
     private final JSlider ramSlider = new JSlider(1024, 16384, AppSettings.defaultRamMb());
     private final JLabel ramLabel = new JLabel();
@@ -36,6 +36,7 @@ public final class SettingsDialog extends JDialog {
     public SettingsDialog(JFrame owner, Theme theme) {
         super(owner, "Настройки", true);
         this.theme = theme;
+        nickField = new Ui.Field(theme, AppSettings.nickname());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel();
@@ -44,12 +45,7 @@ public final class SettingsDialog extends JDialog {
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
 
         root.add(fieldLabel("Ник в игре"));
-        nickField.setBackground(theme.input);
-        nickField.setForeground(theme.text);
-        nickField.setCaretColor(theme.accent);
-        nickField.setFont(Theme.uiFont(Font.PLAIN, 14));
-        nickField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(theme.border), new EmptyBorder(6, 8, 6, 8)));
+
         nickField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         nickField.setAlignmentX(Component.LEFT_ALIGNMENT);
         root.add(nickField);

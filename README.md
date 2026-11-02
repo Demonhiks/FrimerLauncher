@@ -41,6 +41,14 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 |---|---|---|
 | ![](docs/screenshot-modrinth.png) | ![](docs/screenshot-worlds.png) | ![](docs/screenshot-screenshots.png) |
 
+Светлая тема:
+
+| Светлая тема |
+
+|---|
+
+| ![](docs/screenshot-light.png) |
+
 ## Требования
 
 - **JDK 17 или новее** (`javac` и `java` в PATH). Внешние библиотеки не нужны.
