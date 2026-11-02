@@ -11,6 +11,7 @@ import com.frimer.launcher.ui.ServerConsoleDialog;
 import com.frimer.launcher.ui.SettingsDialog;
 import com.frimer.launcher.ui.SkinDialog;
 import com.frimer.launcher.ui.Theme;
+import com.frimer.launcher.ui.Ui;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.io.File;
@@ -86,6 +87,41 @@ public final class UiShots {
                     "10-server-console", 760, 520);
         }
 
+        var menuItems = java.util.List.of(
+                Ui.MenuItemSpec.of("Играть", null),
+                Ui.MenuItemSpec.separator(),
+                Ui.MenuItemSpec.of("Моды (149)", null),
+                Ui.MenuItemSpec.of("Изменить", null),
+                Ui.MenuItemSpec.of("Дублировать", null),
+                Ui.MenuItemSpec.of("Открыть папку", null),
+                Ui.MenuItemSpec.separator(),
+                Ui.MenuItemSpec.of("Удалить", null));
+        javax.swing.JWindow menuWindow = new javax.swing.JWindow();
+        SwingUtilities.invokeAndWait(() -> {
+            menuWindow.setContentPane(Ui.menuPanel(theme, menuItems, null));
+            menuWindow.pack();
+            menuWindow.setVisible(true);
+        });
+        Thread.sleep(500);
+        shot(menuWindow, "11-menu", menuWindow.getWidth(), menuWindow.getHeight());
+        SwingUtilities.invokeAndWait(menuWindow::dispose);
+
+        NewServerDialog comboDialog = new NewServerDialog(frame, theme);
+        SwingUtilities.invokeAndWait(() -> {
+            comboDialog.setModal(false);
+            comboDialog.setVisible(true);
+        });
+        Thread.sleep(600);
+        javax.swing.JComboBox<?> combo = findCombo(comboDialog.getContentPane());
+        System.out.println("combo found: " + (combo != null));
+        if (combo != null) {
+            SwingUtilities.invokeAndWait(() -> combo.setPopupVisible(true));
+            Thread.sleep(700);
+            shot(comboDialog, "12-combo-open", 440, 520);
+            SwingUtilities.invokeAndWait(() -> combo.setPopupVisible(false));
+        }
+        SwingUtilities.invokeAndWait(comboDialog::dispose);
+
         SwingUtilities.invokeAndWait(frame::dispose);
         System.out.println("Готово: " + outDir.getAbsolutePath());
         System.exit(0);
@@ -99,6 +135,43 @@ public final class UiShots {
         Thread.sleep(300);
         shot(dialog, name, width, height);
         SwingUtilities.invokeAndWait(dialog::dispose);
+    }
+
+    private static javax.swing.JComboBox<?> findCombo(java.awt.Container container) {
+        for (java.awt.Component child : container.getComponents()) {
+            if (child instanceof javax.swing.JComboBox<?> combo) {
+                return combo;
+            }
+            if (child instanceof java.awt.Container nested) {
+                javax.swing.JComboBox<?> found = findCombo(nested);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void shotPanel(javax.swing.JPanel panel, String name) throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            java.awt.Dimension size = panel.getPreferredSize();
+            panel.setSize(size);
+            panel.doLayout();
+            panel.validate();
+            java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(
+                    size.width, size.height, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            java.awt.Graphics2D g = image.createGraphics();
+            g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            panel.printAll(g);
+            g.dispose();
+            try {
+                ImageIO.write(image, "png", new File(outDir, name + ".png"));
+            } catch (java.io.IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("shot " + name + " " + size.width + "x" + size.height);
+        });
     }
 
     private static void shot(java.awt.Window window, String name, int width, int height) throws Exception {

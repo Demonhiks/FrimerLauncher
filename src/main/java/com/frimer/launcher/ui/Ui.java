@@ -19,6 +19,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -521,5 +522,221 @@ public final class Ui {
             row.add(b);
         }
         return row;
+    }
+
+    // ------------------------------------------------------------- выпадающие меню
+
+    /**
+     * Пункт меню. Своё меню на JWindow нужно потому, что JPopupMenu
+     * рисуется оконным L&F: получается белый фон с нечитаемым светлым текстом.
+     */
+    public static final class MenuItemSpec {
+
+        private final String text;
+        private final Runnable action;
+        private final boolean separator;
+        private final boolean enabled;
+
+        private MenuItemSpec(String text, Runnable action, boolean separator, boolean enabled) {
+            this.text = text;
+            this.action = action;
+            this.separator = separator;
+            this.enabled = enabled;
+        }
+
+        public static MenuItemSpec of(String text, Runnable action) {
+            return new MenuItemSpec(text, action, false, true);
+        }
+
+        public static MenuItemSpec disabled(String text) {
+            return new MenuItemSpec(text, null, false, false);
+        }
+
+        public static MenuItemSpec separator() {
+            return new MenuItemSpec(null, null, true, false);
+        }
+    }
+
+    private static javax.swing.JWindow openMenu;
+    private static java.awt.event.AWTEventListener openMenuListener;
+
+    /** Собрать панель меню (её же можно отрендерить в картинку для проверки вёрстки). */
+    public static JPanel menuPanel(Theme theme, java.util.List<MenuItemSpec> items, Runnable onClose) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(theme.card);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(theme.border),
+                new EmptyBorder(4, 4, 4, 4)));
+
+        java.util.List<JComponent> rows = new java.util.ArrayList<>();
+        int width = 150;
+        for (MenuItemSpec spec : items) {
+            if (spec.separator) {
+                JPanel line = new JPanel();
+                line.setBackground(theme.border);
+                line.setPreferredSize(new Dimension(10, 1));
+                line.setMinimumSize(new Dimension(10, 1));
+                line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+                JPanel wrap = new JPanel(new java.awt.BorderLayout());
+                wrap.setOpaque(false);
+                wrap.setBorder(new EmptyBorder(5, 6, 5, 6));
+                wrap.add(line, java.awt.BorderLayout.CENTER);
+                rows.add(wrap);
+                continue;
+            }
+
+            JPanel row = new JPanel(new java.awt.BorderLayout());
+            row.setOpaque(true);
+            row.setBackground(theme.card);
+            row.setBorder(new EmptyBorder(7, 12, 7, 12));
+            JLabel label = new JLabel(spec.text);
+            label.setFont(Theme.uiFont(Font.PLAIN, 13));
+            label.setForeground(spec.enabled ? theme.text : theme.disabledText);
+            row.add(label, java.awt.BorderLayout.CENTER);
+            width = Math.max(width, label.getPreferredSize().width + 40);
+
+            if (spec.enabled) {
+                row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                row.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        row.setBackground(theme.cardSel);
+                        row.setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(theme.accent),
+                                new EmptyBorder(6, 11, 6, 11)));
+                        label.setForeground(theme.accent);
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        row.setBackground(theme.card);
+                        row.setBorder(new EmptyBorder(7, 12, 7, 12));
+                        label.setForeground(theme.text);
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        if (onClose != null) {
+                            onClose.run();
+                        }
+                        if (spec.action != null) {
+                            spec.action.run();
+                        }
+                    }
+                });
+            }
+            rows.add(row);
+        }
+
+        for (JComponent row : rows) {
+            int height = Math.max(18, row.getPreferredSize().height);
+            row.setPreferredSize(new Dimension(width, height));
+            row.setMinimumSize(new Dimension(width, height));
+            row.setMaximumSize(new Dimension(width, height));
+            row.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            panel.add(row);
+        }
+        return panel;
+    }
+
+    /** Показать меню рядом с компонентом (x, y — смещение от его левого верхнего угла). */
+    public static void showMenu(java.awt.Component anchor, int offsetX, int offsetY, Theme theme,
+                                java.util.List<MenuItemSpec> items) {
+        closeOpenMenu();
+        java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(anchor);
+        javax.swing.JWindow window = new javax.swing.JWindow(owner);
+        window.setAlwaysOnTop(true);
+        window.setFocusableWindowState(true);
+
+        Runnable close = Ui::closeOpenMenu;
+        window.setContentPane(menuPanel(theme, items, close));
+        window.pack();
+
+        java.awt.Point base = anchor.getLocationOnScreen();
+        java.awt.Rectangle screen = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getMaximumWindowBounds();
+        int x = base.x + offsetX;
+        int y = base.y + offsetY;
+        if (x + window.getWidth() > screen.x + screen.width) {
+            x = Math.max(screen.x + 4, screen.x + screen.width - window.getWidth() - 4);
+        }
+        if (y + window.getHeight() > screen.y + screen.height) {
+            y = Math.max(screen.y + 4, base.y - window.getHeight());
+        }
+        window.setLocation(x, y);
+
+        openMenuListener = event -> {
+            if (!(event instanceof java.awt.event.MouseEvent press)) {
+                return;
+            }
+            java.awt.Component source = press.getComponent();
+            if (source != null && javax.swing.SwingUtilities.getWindowAncestor(source) == window) {
+                return;
+            }
+            closeOpenMenu();
+        };
+        java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(openMenuListener,
+                java.awt.AWTEvent.MOUSE_EVENT_MASK);
+        window.addWindowFocusListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowLostFocus(java.awt.event.WindowEvent e) {
+                closeOpenMenu();
+            }
+        });
+        window.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) {
+                    closeOpenMenu();
+                }
+            }
+        });
+
+        openMenu = window;
+        window.setVisible(true);
+        window.toFront();
+    }
+
+    /** Закрыть открытое меню, если оно есть. */
+    public static void closeOpenMenu() {
+        if (openMenuListener != null) {
+            java.awt.Toolkit.getDefaultToolkit().removeAWTEventListener(openMenuListener);
+            openMenuListener = null;
+        }
+        if (openMenu != null) {
+            openMenu.setVisible(false);
+            openMenu.dispose();
+            openMenu = null;
+        }
+    }
+
+    /** Список JComboBox в цветах темы: иначе выпадающий список белый с нечитаемым текстом. */
+    public static void styleCombo(JComboBox<String> combo, Theme theme) {
+        combo.setBackground(theme.input);
+        combo.setForeground(theme.text);
+        combo.setFont(Theme.uiFont(Font.PLAIN, 14));
+        combo.setRenderer(new javax.swing.DefaultListCellRenderer() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public java.awt.Component getListCellRendererComponent(javax.swing.JList<?> list,
+                                                                   Object value, int index,
+                                                                   boolean isSelected,
+                                                                   boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
+                        isSelected, cellHasFocus);
+                label.setOpaque(true);
+                label.setBorder(new EmptyBorder(5, 8, 5, 8));
+                if (isSelected && index >= 0) {
+                    label.setBackground(theme.cardSel);
+                    label.setForeground(theme.accent);
+                } else {
+                    label.setBackground(index < 0 ? theme.input : theme.card);
+                    label.setForeground(theme.text);
+                }
+                return label;
+            }
+        });
     }
 }

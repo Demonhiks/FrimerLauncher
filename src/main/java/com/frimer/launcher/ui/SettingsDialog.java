@@ -57,9 +57,7 @@ public final class SettingsDialog extends JDialog {
 
         root.add(fieldLabel("Тема оформления"));
         themeCombo.setSelectedItem(AppSettings.theme());
-        themeCombo.setBackground(theme.input);
-        themeCombo.setForeground(theme.text);
-        themeCombo.setFont(Theme.uiFont(Font.PLAIN, 14));
+        Ui.styleCombo(themeCombo, theme);
         themeCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         themeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
         root.add(themeCombo);

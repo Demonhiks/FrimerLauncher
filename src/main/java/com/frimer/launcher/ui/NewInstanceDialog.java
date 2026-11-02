@@ -266,9 +266,7 @@ public final class NewInstanceDialog extends JDialog {
     }
 
     private void styleCombo(JComboBox<String> combo) {
-        combo.setBackground(theme.input);
-        combo.setForeground(theme.text);
-        combo.setFont(Theme.uiFont(Font.PLAIN, 14));
+        Ui.styleCombo(combo, theme);
         combo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         combo.setAlignmentX(Component.LEFT_ALIGNMENT);
     }

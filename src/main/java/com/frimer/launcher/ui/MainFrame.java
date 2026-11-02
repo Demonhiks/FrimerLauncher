@@ -106,6 +106,7 @@ public final class MainFrame extends JFrame {
     public MainFrame() {
         super("Frimer");
         theme = Theme.of(AppSettings.theme());
+        applyUiDefaults(theme);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         java.awt.Rectangle bounds = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getMaximumWindowBounds();
@@ -139,9 +140,29 @@ public final class MainFrame extends JFrame {
         installResponsiveHook();
     }
 
+    /**
+     * Цвета для стандартных всплывающих частей Swing: без этого выпадающие списки
+     * и меню рисуются белыми, а текст в них — светлым из темы (нечитаемо).
+     */
+    private static void applyUiDefaults(Theme theme) {
+        javax.swing.UIManager.put("PopupMenu.background", theme.card);
+        javax.swing.UIManager.put("PopupMenu.foreground", theme.text);
+        javax.swing.UIManager.put("MenuItem.background", theme.card);
+        javax.swing.UIManager.put("MenuItem.foreground", theme.text);
+        javax.swing.UIManager.put("MenuItem.selectionBackground", theme.cardSel);
+        javax.swing.UIManager.put("MenuItem.selectionForeground", theme.accent);
+        javax.swing.UIManager.put("ComboBox.background", theme.input);
+        javax.swing.UIManager.put("ComboBox.foreground", theme.text);
+        javax.swing.UIManager.put("ComboBox.selectionBackground", theme.cardSel);
+        javax.swing.UIManager.put("ComboBox.selectionForeground", theme.accent);
+        javax.swing.UIManager.put("List.background", theme.card);
+        javax.swing.UIManager.put("List.foreground", theme.text);
+        javax.swing.UIManager.put("List.selectionBackground", theme.cardSel);
+        javax.swing.UIManager.put("List.selectionForeground", theme.accent);
+    }
+
     /** Реагировать на изменение размера окна. */
-    private void installResponsiveHook() {
-        addComponentListener(new java.awt.event.ComponentAdapter() {
+    private void installResponsiveHook() {        addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
                 applyResponsiveLayout();
@@ -748,48 +769,37 @@ public final class MainFrame extends JFrame {
     }
 
     private void showNickMenu() {
-        JPopupMenu menu = new JPopupMenu();
-        menu.setBackground(theme.card);
-        menu.setBorder(BorderFactory.createLineBorder(theme.border));
+        java.util.List<Ui.MenuItemSpec> items = new java.util.ArrayList<>();
         for (String nick : AppSettings.nicknameHistory()) {
-            JMenuItem item = menuItem(nick);
-            item.addActionListener(e -> {
+            items.add(Ui.MenuItemSpec.of(nick, () -> {
                 AppSettings.setNickname(nick);
                 AppSettings.flush();
                 refreshNickButton();
-            });
-            menu.add(item);
+            }));
         }
-        if (!AppSettings.nicknameHistory().isEmpty()) {
-            menu.addSeparator();
+        if (!items.isEmpty()) {
+            items.add(Ui.MenuItemSpec.separator());
         }
-        JMenuItem add = menuItem("+ Добавить аккаунт");
-        add.addActionListener(e -> {
-            String nick = JOptionPane.showInputDialog(this, "Ник:", "Новый аккаунт",
-                    JOptionPane.PLAIN_MESSAGE);
-            if (nick == null) {
-                return;
-            }
-            nick = nick.strip();
-            if (!nick.matches("^[A-Za-z0-9_]{1,16}$")) {
-                JOptionPane.showMessageDialog(this, "Только буквы, цифры и _ (до 16 символов).",
-                        "Неверный ник", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            AppSettings.setNickname(nick);
-            AppSettings.flush();
-            refreshNickButton();
-        });
-        menu.add(add);
-        menu.show(nickButton, 0, nickButton.getHeight());
+        items.add(Ui.MenuItemSpec.of("+ Добавить аккаунт", this::promptNewNick));
+        Ui.showMenu(nickButton, 0, nickButton.getHeight(), theme, items);
     }
 
-    private JMenuItem menuItem(String text) {
-        JMenuItem item = new JMenuItem(text);
-        item.setBackground(theme.card);
-        item.setForeground(theme.text);
-        item.setFont(Theme.uiFont(Font.PLAIN, 13));
-        return item;
+    /** Спросить и запомнить новый ник. */
+    private void promptNewNick() {
+        String nick = JOptionPane.showInputDialog(this, "Ник:", "Новый аккаунт",
+                JOptionPane.PLAIN_MESSAGE);
+        if (nick == null) {
+            return;
+        }
+        String clean = nick.strip();
+        if (!clean.matches("^[A-Za-z0-9_]{1,16}$")) {
+            JOptionPane.showMessageDialog(this, "Только буквы, цифры и _ (до 16 символов).",
+                    "Неверный ник", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        AppSettings.setNickname(clean);
+        AppSettings.flush();
+        refreshNickButton();
     }
 
     // =================================================================== инстансы
@@ -850,40 +860,20 @@ public final class MainFrame extends JFrame {
     }
 
     private void showInstanceMenu(Instance inst, JComponent anchor, Point point) {
-        JPopupMenu menu = new JPopupMenu();
-        menu.setBackground(theme.card);
-        menu.setBorder(BorderFactory.createLineBorder(theme.border));
-
-        JMenuItem playItem = menuItem("Играть");
-        playItem.addActionListener(e -> play());
-        menu.add(playItem);
-        menu.add(new JSeparator());
-
-        JMenuItem modsItem = menuItem("Моды (" + Utils.countMods(inst.folder) + ")");
-        modsItem.addActionListener(e -> openModsDialog(inst));
-        menu.add(modsItem);
-
-        JMenuItem editItem = menuItem("Изменить");
-        editItem.addActionListener(e -> editInstance(inst));
-        menu.add(editItem);
-
-        JMenuItem dupItem = menuItem("Дублировать");
-        dupItem.addActionListener(e -> duplicateInstance(inst));
-        menu.add(dupItem);
-
-        JMenuItem folderItem = menuItem("Открыть папку");
-        folderItem.addActionListener(e -> Ui.openFolder(inst.folder));
-        menu.add(folderItem);
-        menu.add(new JSeparator());
-
-        JMenuItem delItem = menuItem("Удалить");
-        delItem.addActionListener(e -> {
+        java.util.List<Ui.MenuItemSpec> items = new java.util.ArrayList<>();
+        items.add(Ui.MenuItemSpec.of("Играть", this::play));
+        items.add(Ui.MenuItemSpec.separator());
+        items.add(Ui.MenuItemSpec.of("Моды (" + Utils.countMods(inst.folder) + ")",
+                () -> openModsDialog(inst)));
+        items.add(Ui.MenuItemSpec.of("Изменить", () -> editInstance(inst)));
+        items.add(Ui.MenuItemSpec.of("Дублировать", () -> duplicateInstance(inst)));
+        items.add(Ui.MenuItemSpec.of("Открыть папку", () -> Ui.openFolder(inst.folder)));
+        items.add(Ui.MenuItemSpec.separator());
+        items.add(Ui.MenuItemSpec.of("Удалить", () -> {
             selectInstance(inst);
             deleteCurrentInstance();
-        });
-        menu.add(delItem);
-
-        menu.show(anchor, point.x, point.y);
+        }));
+        Ui.showMenu(anchor, point.x, point.y, theme, items);
     }
 
     private void openModsDialog(Instance inst) {
