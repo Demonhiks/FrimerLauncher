@@ -355,7 +355,7 @@ public final class MainFrame extends JFrame {
         content.add(statusRow);
         content.add(Box.createVerticalStrut(10));
 
-        tilesPanel = new WrapPanel(new WrapLayout(10));
+        tilesPanel = new WrapPanel(10);
         tilesPanel.setBackground(theme.bg);
         tilesScroll = Ui.borderlessScroll(tilesPanel, theme);
         tilesScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -865,6 +865,9 @@ public final class MainFrame extends JFrame {
         items.add(Ui.MenuItemSpec.separator());
         items.add(Ui.MenuItemSpec.of("Моды (" + Utils.countMods(inst.folder) + ")",
                 () -> openModsDialog(inst)));
+        items.add(Ui.MenuItemSpec.of("Найти моды…", () -> openModrinth(inst)));
+        items.add(Ui.MenuItemSpec.of("Миры", () -> openWorlds(inst)));
+        items.add(Ui.MenuItemSpec.of("Скрины", () -> openScreenshots(inst)));
         items.add(Ui.MenuItemSpec.of("Изменить", () -> editInstance(inst)));
         items.add(Ui.MenuItemSpec.of("Дублировать", () -> duplicateInstance(inst)));
         items.add(Ui.MenuItemSpec.of("Открыть папку", () -> Ui.openFolder(inst.folder)));
@@ -874,6 +877,33 @@ public final class MainFrame extends JFrame {
             deleteCurrentInstance();
         }));
         Ui.showMenu(anchor, point.x, point.y, theme, items);
+    }
+
+    /** Браузер модов Modrinth для этой сборки. */
+    private void openModrinth(Instance inst) {
+        Path target = inst.folder.resolve("mods");
+        try {
+            java.nio.file.Files.createDirectories(target);
+        } catch (java.io.IOException ignored) {
+            // папку создаст установка
+        }
+        ModrinthDialog dialog = new ModrinthDialog(this, theme, inst,
+                com.frimer.launcher.core.Modrinth.MOD, target);
+        dialog.showDialog();
+        refreshInstances();
+        selectInstance(inst);
+    }
+
+    /** Миры сборки: размеры, датапаки, удаление. */
+    private void openWorlds(Instance inst) {
+        WorldsDialog dialog = new WorldsDialog(this, theme, inst);
+        dialog.showDialog();
+    }
+
+    /** Галерея скриншотов сборки. */
+    private void openScreenshots(Instance inst) {
+        ScreenshotsDialog dialog = new ScreenshotsDialog(this, theme, inst);
+        dialog.showDialog();
     }
 
     private void openModsDialog(Instance inst) {
@@ -1427,133 +1457,4 @@ public final class MainFrame extends JFrame {
 
     // =================================================================== раскладка
 
-    /** Панель плиток: ширина равна видимой области, поэтому перенос строк работает верно. */
-    private static final class WrapPanel extends JPanel implements javax.swing.Scrollable {
-        private static final long serialVersionUID = 1L;
-
-        WrapPanel(LayoutManager layout) {
-            super(layout);
-        }
-
-        @Override
-        public Dimension getPreferredScrollableViewportSize() {
-            return getPreferredSize();
-        }
-
-        @Override
-        public int getScrollableUnitIncrement(java.awt.Rectangle visibleRect, int orientation,
-                                              int direction) {
-            return 18;
-        }
-
-        @Override
-        public int getScrollableBlockIncrement(java.awt.Rectangle visibleRect, int orientation,
-                                               int direction) {
-            return Math.max(60, visibleRect.height - 40);
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportWidth() {
-            return true;
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportHeight() {
-            return false;
-        }
-    }
-
-    /** Простая «обтекаемая» раскладка плиток по ширине контейнера. */
-    private static final class WrapLayout implements LayoutManager {
-        private final int gap;
-
-        WrapLayout(int gap) {
-            this.gap = gap;
-        }
-
-        @Override
-        public void addLayoutComponent(String name, Component comp) {
-        }
-
-        @Override
-        public void removeLayoutComponent(Component comp) {
-        }
-
-        @Override
-        public Dimension preferredLayoutSize(Container target) {
-            synchronized (target.getTreeLock()) {
-                int limit = availableWidth(target);
-                if (limit <= 0) {
-                    limit = 640;
-                }
-                Insets insets = target.getInsets();
-                int usable = Math.max(120, limit - insets.left - insets.right - gap);
-                int usedWidth = 0;
-                int rowWidth = 0;
-                int rowHeight = 0;
-                int totalHeight = 0;
-                for (Component c : target.getComponents()) {
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    if (rowWidth > 0 && rowWidth + gap + d.width > usable) {
-                        totalHeight += rowHeight + gap;
-                        usedWidth = Math.max(usedWidth, rowWidth);
-                        rowWidth = d.width;
-                        rowHeight = d.height;
-                    } else {
-                        rowWidth = rowWidth == 0 ? d.width : rowWidth + gap + d.width;
-                        rowHeight = Math.max(rowHeight, d.height);
-                    }
-                }
-                totalHeight += rowHeight;
-                usedWidth = Math.max(usedWidth, rowWidth);
-                return new Dimension(usedWidth + insets.left + insets.right + gap,
-                        totalHeight + insets.top + insets.bottom + gap);
-            }
-        }
-
-        @Override
-        public Dimension minimumLayoutSize(Container target) {
-            return new Dimension(120, 60);
-        }
-
-        /** Ширина, доступная плиткам: у вьюпорта точнее, чем у самой панели. */
-        private int availableWidth(Container target) {
-            Container parent = target.getParent();
-            if (parent instanceof javax.swing.JViewport viewport) {
-                int extent = viewport.getExtentSize().width;
-                if (extent > 0) {
-                    return extent;
-                }
-            }
-            return target.getWidth();
-        }
-
-        @Override
-        public void layoutContainer(Container target) {
-            synchronized (target.getTreeLock()) {
-                Insets insets = target.getInsets();
-                int limit = availableWidth(target) - insets.right;
-                int x = insets.left;
-                int y = insets.top;
-                int rowHeight = 0;
-                for (Component c : target.getComponents()) {
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    if (x > insets.left && x + d.width > limit) {
-                        x = insets.left;
-                        y += rowHeight + gap;
-                        rowHeight = 0;
-                    }
-                    c.setBounds(x, y, Math.min(d.width, Math.max(120, limit - x)), d.height);
-                    x += d.width + gap;
-                    rowHeight = Math.max(rowHeight, d.height);
-                }
-            }
-        }
-    }
 }

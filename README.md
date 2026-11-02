@@ -14,6 +14,10 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 - Автоустановка **Java** (Eclipse Temurin через Adoptium API): JRE/JDK нужного мажора, zip и tar.gz.
 - Сборка команды запуска по-честному: правила ОС, `inheritsFrom`, аргументы JVM/игры, `natives`, classpath.
 - Импорт сборок **Modrinth (.mrpack)** перетаскиванием файла на окно.
+- Браузер **Modrinth**: поиск модов/шейдеров/ресурспаков/датапаков, выбор версии,
+  установка с обязательными зависимостями и проверкой SHA.
+- **Миры**: размер мира, открытие папки, датапаки с Modrinth, удаление.
+- **Скриншоты**: галерея с превью (новые сверху), открытие, копирование в буфер, удаление.
 - **Разбор крашей**: причина, подсказки по частым проблемам (RAM, Mixin, Java, драйверы) и текст отчёта.
 - Консоль игры прямо в окне, принудительное закрытие процесса вместе с дочерними.
 
@@ -32,6 +36,10 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 | Клиент | Сервера | Моды | Скины |
 |---|---|---|---|
 | ![](docs/screenshot-main.png) | ![](docs/screenshot-servers.png) | ![](docs/screenshot-mods.png) | ![](docs/screenshot-skins.png) |
+
+| Браузер Modrinth | Миры | Скриншоты |
+|---|---|---|
+| ![](docs/screenshot-modrinth.png) | ![](docs/screenshot-worlds.png) | ![](docs/screenshot-screenshots.png) |
 
 ## Требования
 
@@ -89,13 +97,16 @@ src/main/java/com/frimer/launcher/
 │   ├── Mojang, Loaders, Rules, LaunchBuilder
 │   ├── JavaProvisioner, VanillaInstaller, FabricInstaller, ForgeInstaller
 │   ├── Instance, InstanceStore, ModpackImporter, ModFiles
+│   ├── Modrinth (поиск и установка с зависимостями)
 │   ├── ServerInstance, ServerStore, ServerInstallers, ServerRunner, Playit
 │   ├── Skins, SkinRenderer, CrashAnalyzer, GameLauncher, AppSettings
 └── ui/                       Swing-интерфейс
     ├── Theme, Ui, MainFrame, InstanceTile
+    ├── WorldsDialog, ScreenshotsDialog, ModrinthDialog, WrapPanel
     └── диалоги: сборка, настройки, сервер, консоль, моды, скины, краш
 tools/                        служебные утилиты разработчика
 ├── SmokeTest.java            проверка ядра без GUI (JSON, UUID, сеть Mojang, Forge, скин)
+├── TestModrinth.java         поиск и установка мода с Modrinth в временную папку
 └── UiShots.java              рендер всех окон в build/ui (проверка вёрстки)
 legacy/launcher.py            исходная Python-версия для сверки поведения
 ```
@@ -106,9 +117,10 @@ legacy/launcher.py            исходная Python-версия для све
 Java, сборка аргументов, сборки/инстансы, сервера и их консоль, playit.gg, скины,
 метаданные модов, импорт `.mrpack`, разбор крашей, темы, настройки.
 
-Пока **не** перенесено из Python-версии: Discord Rich Presence, браузер модов
-Modrinth/CurseForge с поиском и обновлением, анализатор производительности с графиками,
-вкладки миров/скриншотов/файлов, ИИ-починка крашей, автообновление лаунчера и анимация сплэша.
+Пока **не** перенесено: Discord Rich Presence (в Python-версии `DISCORD_CLIENT_ID` был пустым),
+CurseForge (нужен API-ключ), анализатор производительности с графиками, ИИ-починка крашей
+(модуль `ai_fixer.py` отсутствует), автообновление (`UPDATE_MANIFEST_URL` был пустым)
+и анимация сплэша.
 
 ## Разработка
 

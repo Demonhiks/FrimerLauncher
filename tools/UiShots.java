@@ -1,17 +1,21 @@
 import com.frimer.launcher.core.Instance;
 import com.frimer.launcher.core.InstanceStore;
 import com.frimer.launcher.core.ServerInstance;
+import java.nio.file.Path;
 import com.frimer.launcher.ui.CrashingDialog;
 import com.frimer.launcher.ui.EditInstanceDialog;
 import com.frimer.launcher.ui.MainFrame;
+import com.frimer.launcher.ui.ModrinthDialog;
 import com.frimer.launcher.ui.ModsDialog;
 import com.frimer.launcher.ui.NewInstanceDialog;
 import com.frimer.launcher.ui.NewServerDialog;
 import com.frimer.launcher.ui.ServerConsoleDialog;
+import com.frimer.launcher.ui.ScreenshotsDialog;
 import com.frimer.launcher.ui.SettingsDialog;
 import com.frimer.launcher.ui.SkinDialog;
 import com.frimer.launcher.ui.Theme;
 import com.frimer.launcher.ui.Ui;
+import com.frimer.launcher.ui.WorldsDialog;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.io.File;
@@ -106,6 +110,23 @@ public final class UiShots {
         shot(menuWindow, "11-menu", menuWindow.getWidth(), menuWindow.getHeight());
         SwingUtilities.invokeAndWait(menuWindow::dispose);
 
+        if (instance != null) {
+            Path sample = makeSampleInstance();
+            Instance probe = new Instance(sample, "Тест", "Fabric", "1.20.1", 4096, "0.15.0");
+            capture(new WorldsDialog(frame, theme, probe), "14-worlds", 680, 520, 700);
+            capture(new ScreenshotsDialog(frame, theme, probe), "15-screenshots", 820, 580, 1800);
+            cleanSample(sample);
+            ModrinthDialog modrinth = new ModrinthDialog(frame, theme, instance,
+                    com.frimer.launcher.core.Modrinth.MOD, instance.folder.resolve("mods"));
+            SwingUtilities.invokeAndWait(() -> {
+                modrinth.setModal(false);
+                modrinth.setVisible(true);
+            });
+            Thread.sleep(4000);
+            shot(modrinth, "16-modrinth", 780, 580);
+            SwingUtilities.invokeAndWait(modrinth::dispose);
+        }
+
         SettingsDialog settingsDialog = new SettingsDialog(frame, theme);
         SwingUtilities.invokeAndWait(() -> {
             settingsDialog.setModal(false);
@@ -143,13 +164,62 @@ public final class UiShots {
     }
 
     private static void capture(JDialog dialog, String name, int width, int height) throws Exception {
+        capture(dialog, name, width, height, 300);
+    }
+
+    private static void capture(JDialog dialog, String name, int width, int height, int waitMs)
+            throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             dialog.setModal(false);
             dialog.setVisible(true);
         });
-        Thread.sleep(300);
+        Thread.sleep(waitMs);
         shot(dialog, name, width, height);
         SwingUtilities.invokeAndWait(dialog::dispose);
+    }
+
+    /** Временный инстанс с мирами и скриншотами — чтобы проверить списки с данными. */
+    private static Path makeSampleInstance() throws Exception {
+        Path root = new File("build/ui-sample").toPath();
+        cleanSample(root);
+        java.nio.file.Files.createDirectories(root.resolve("saves").resolve("Мир-1"));
+        java.nio.file.Files.createDirectories(root.resolve("saves").resolve("Hardcore-world"));
+        java.nio.file.Files.createDirectories(root.resolve("screenshots"));
+        java.nio.file.Files.writeString(root.resolve("saves").resolve("Мир-1")
+                .resolve("level.dat"), "x".repeat(400_000));
+        java.nio.file.Files.writeString(root.resolve("saves").resolve("Hardcore-world")
+                .resolve("level.dat"), "y".repeat(120_000));
+        for (int i = 1; i <= 3; i++) {
+            java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+                    480, 270, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            java.awt.Graphics2D g = img.createGraphics();
+            g.setColor(new java.awt.Color(30 + i * 40, 60, 120 - i * 20));
+            g.fillRect(0, 0, 480, 270);
+            g.setColor(java.awt.Color.WHITE);
+            g.drawString("screenshot " + i, 200, 140);
+            g.dispose();
+            ImageIO.write(img, "png", root.resolve("screenshots")
+                    .resolve("2026-11-0" + i + "_12.00.00.png").toFile());
+        }
+        return root;
+    }
+
+    private static void cleanSample(Path root) {
+        try {
+            if (root != null && java.nio.file.Files.exists(root)) {
+                try (var stream = java.nio.file.Files.walk(root)) {
+                    stream.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                        try {
+                            java.nio.file.Files.deleteIfExists(p);
+                        } catch (java.io.IOException ignored) {
+                            // занятый файл
+                        }
+                    });
+                }
+            }
+        } catch (java.io.IOException ignored) {
+            // не критично
+        }
     }
 
     private static javax.swing.JComboBox<?> findCombo(java.awt.Container container) {
