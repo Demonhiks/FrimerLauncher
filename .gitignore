@@ -1,0 +1,17 @@
+# Gala-артефакты сборки
+build/
+out/
+dist/
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# ОС
+Thumbs.db
+Desktop.ini
+.DS_Store
