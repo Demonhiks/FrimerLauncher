@@ -4,6 +4,9 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 Запускает Vanilla, Fabric, Quilt, Forge и NeoForge, держит сервера, скины и моды,
 сам скачивает нужную версию Java и умеет импортировать сборки Modrinth.
 
+[![Скачать](https://img.shields.io/github/v/release/Demonhiks/FrimerLaunchers?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&color=f2a93b)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
+[![Java 17+](https://img.shields.io/badge/Java-17%2B-1a1f27?color=1a1f27)](https://adoptium.net/temurin/releases/?package=jre)
+
 ![Главное окно](docs/screenshot-main.png)
 
 ## Скачать
