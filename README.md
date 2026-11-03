@@ -12,7 +12,13 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 ## Скачать
 
 Готовый `FrimerLauncher.jar` собирается автоматически и лежит в разделе
-**[Releases](../../releases)**. Нужна **Java 17 или новее** — проверьте:
+**[Releases](../../releases)**. Постоянная ссылка на последнюю версию:
+
+```text
+https://github.com/Demonhiks/FrimerLaunchers/releases/latest/download/FrimerLauncher.jar
+```
+
+Нужна **Java 17 или новее** — проверьте:
 
 ```bat
 java -version
