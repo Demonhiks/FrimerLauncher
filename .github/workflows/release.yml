@@ -32,11 +32,42 @@ jobs:
           name: FrimerLauncher
           path: target/FrimerLauncher.jar
 
+      - name: Extract changelog for this version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          python3 - "$VER" <<'EOF'
+          import re, sys
+
+          ver = sys.argv[1]
+          src = open("src/main/java/com/frimer/launcher/core/Changelog.java",
+                     encoding="utf-8").read()
+          # Ищем запись нужной версии: new Entry("<ver>", "<дата>", List.of( ... ))
+          m = re.search(r'new Entry\("' + re.escape(ver) + r'", "([^"]*)", List\.of\((.*?)\)\)',
+                        src, re.S)
+          lines = []
+          if m:
+              date = m.group(1)
+              changes = re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(2))
+              changes = [c.replace('\\\\', '\\') for c in changes]
+              lines.append(f"### Что нового в {ver} ({date})")
+              lines += [f"- {c}" for c in changes]
+          else:
+              lines.append(f"### Frimer Launcher {ver}")
+              lines.append("- (нет записи в журнале изменений)")
+          text = "\n".join(lines) + "\n\n"
+          with open("changes.md", "w", encoding="utf-8") as f:
+              f.write(text)
+          print(text)
+          EOF
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: target/FrimerLauncher.jar
+          body_path: changes.md
+          append_body: true
           body: |
             ## Frimer Launcher
 
@@ -52,7 +83,7 @@ jobs:
             java -jar FrimerLauncher.jar
             ```
 
-            Данные лежат в `~/.mylauncher` (`C:\Users\<имя>\.mylauncher`) — сборки, сервера и
+            Данные лежат в `~/.frimerlauncher` (`C:\Users\<имя>\.frimerlauncher`) — сборки, сервера и
             настройки из Python-версии подхватываются сами.
 
             > Windows SmartScreen может предупредить о неизвестном издателе — это обычное
