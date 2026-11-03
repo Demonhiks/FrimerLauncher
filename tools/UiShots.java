@@ -71,6 +71,17 @@ public final class UiShots {
         });
         shot(frame, "02-servers", 1040, 700);
 
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                var method = MainFrame.class.getDeclaredMethod("showFriends");
+                method.setAccessible(true);
+                method.invoke(frame);
+            } catch (ReflectiveOperationException e) {
+                e.printStackTrace();
+            }
+        });
+        shot(frame, "02b-friends", 1040, 700);
+
         List<Instance> instances = InstanceStore.loadAll();
         Instance instance = instances.isEmpty() ? null : instances.get(0);
 

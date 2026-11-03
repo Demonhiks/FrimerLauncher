@@ -74,6 +74,10 @@ public final class MainFrame extends JFrame {
     private JButton nickButton;
     private JButton tabInstButton;
     private JButton tabSrvButton;
+    private JButton tabFriendsButton;
+    private final java.awt.CardLayout contentCards = new java.awt.CardLayout();
+    private final JPanel contentHolder = new JPanel(contentCards);
+    private FriendsPanel friendsPanel;
     private JLabel sectionLabel;
     private JButton newInstButton;
     private JButton delInstButton;
@@ -134,7 +138,8 @@ public final class MainFrame extends JFrame {
         root.setBackground(theme.bg);
         sidebarPanel = buildSidebar();
         root.add(sidebarPanel, BorderLayout.WEST);
-        root.add(buildContent(), BorderLayout.CENTER);
+        contentHolder.add(buildContent(), "main");
+        root.add(contentHolder, BorderLayout.CENTER);
         setContentPane(root);
 
         enableDropImport(root);
@@ -256,7 +261,7 @@ public final class MainFrame extends JFrame {
         Ui.GradientPanel sidebar = new Ui.GradientPanel(theme.sidebar, theme.bg);
         sidebar.setEdgeLine(theme.border);
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setPreferredSize(new Dimension(304, 0));
+        sidebar.setPreferredSize(new Dimension(318, 0));
         sidebar.setBorder(new EmptyBorder(20, 18, 16, 18));
 
         JPanel brandRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 0));
@@ -304,19 +309,22 @@ public final class MainFrame extends JFrame {
         sidebar.add(nickTools);
         sidebar.add(Box.createVerticalStrut(18));
 
-        tabInstButton = tabButton("Инстансы", true);
+        tabInstButton = tabButton("Сборки", true);
         tabSrvButton = tabButton("Серверы", false);
+        tabFriendsButton = tabButton("Друзья", false);
         tabInstButton.addActionListener(e -> switchTab(false));
         tabSrvButton.addActionListener(e -> switchTab(true));
+        tabFriendsButton.addActionListener(e -> showFriends());
 
         Ui.Card tabCard = new Ui.Card(theme.input, theme.border);
         tabCard.setRadius(11);
-        tabCard.setLayout(new java.awt.GridLayout(1, 2, 4, 0));
+        tabCard.setLayout(new java.awt.GridLayout(1, 3, 4, 0));
         tabCard.setBorder(new EmptyBorder(4, 4, 4, 4));
         tabCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         tabCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         tabCard.add(tabInstButton);
         tabCard.add(tabSrvButton);
+        tabCard.add(tabFriendsButton);
         sidebar.add(tabCard);
         sidebar.add(Box.createVerticalStrut(18));
 
@@ -400,6 +408,7 @@ public final class MainFrame extends JFrame {
 
     private JButton tabButton(String text, boolean active) {
         Ui.SegmentButton button = new Ui.SegmentButton(text, theme);
+        button.setFont(Theme.uiFont(Font.PLAIN, 11));
         button.setActive(active);
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         return button;
@@ -837,6 +846,8 @@ public final class MainFrame extends JFrame {
     // =================================================================== вкладки
 
     private void switchTab(boolean toServers) {
+        contentCards.show(contentHolder, "main");
+        updateTabStyle(tabFriendsButton, false);
         serverTab = toServers;
         updateTabStyle(tabInstButton, !toServers);
         updateTabStyle(tabSrvButton, toServers);
@@ -877,6 +888,63 @@ public final class MainFrame extends JFrame {
             }
         }
         rebuildTiles();
+        revalidate();
+        repaint();
+    }
+
+    /** Открыть вкладку «Друзья» (сеть поднимается при первом открытии). */
+    private void showFriends() {
+        if (friendsPanel == null) {
+            friendsPanel = new FriendsPanel(theme, new FriendsPanel.Context() {
+                @Override
+                public String instanceName() {
+                    return current == null ? "" : current.name;
+                }
+
+                @Override
+                public String mcVersion() {
+                    return current == null ? "" : current.mcVersion;
+                }
+
+                @Override
+                public String loader() {
+                    return current == null ? "" : current.loader;
+                }
+
+                @Override
+                public int mods() {
+                    return current == null ? 0
+                            : com.frimer.launcher.core.ModFiles
+                                    .list(current.folder.resolve("mods")).size();
+                }
+
+                @Override
+                public String serverName() {
+                    return currentServer == null ? "" : currentServer.name;
+                }
+
+                @Override
+                public String serverAddress() {
+                    if (currentServer == null || currentServer.playitAddress == null) {
+                        return "";
+                    }
+                    return currentServer.playitAddress;
+                }
+            });
+            contentHolder.add(friendsPanel, "friends");
+        }
+        updateTabStyle(tabInstButton, false);
+        updateTabStyle(tabSrvButton, false);
+        updateTabStyle(tabFriendsButton, true);
+        sectionLabel.setText("ДРУЗЬЯ");
+        for (JButton button : new JButton[]{newInstButton, delInstButton, settingsButton,
+                importButton, modpackButton, newSrvButton, delSrvButton, playButton, killButton,
+                startSrvButton, stopSrvButton, consoleButton, copyAddrButton}) {
+            if (button != null) {
+                button.setVisible(false);
+            }
+        }
+        contentCards.show(contentHolder, "friends");
         revalidate();
         repaint();
     }
@@ -1734,6 +1802,9 @@ public final class MainFrame extends JFrame {
             }
         }
         AppSettings.flush();
+        if (friendsPanel != null) {
+            friendsPanel.shutdown();
+        }
         dispose();
         System.exit(0);
     }
