@@ -18,7 +18,7 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 | Система | Файл | Что внутри |
 |---|---|---|
 | Windows x64 | `FrimerLauncher-win64.zip` | `Frimer Launcher.exe` |
-| Linux x64 | `FrimerLauncher-linux-x64.tar.gz` | `Frimer Launcher/bin/Frimer Launcher` |
+| Linux x64 | `FrimerLauncher-linux-x64.tar.gz` | `frimer-launcher/run.sh` |
 | macOS Apple Silicon | `FrimerLauncher-macos-arm64.zip` | `Frimer Launcher.app` |
 | macOS Intel | `FrimerLauncher-macos-x64.zip` | `Frimer Launcher.app` |
 
@@ -29,11 +29,12 @@ Windows:
 Frimer Launcher.exe
 ```
 
-Linux:
+Linux (архив обычно попадает в `~/Downloads` — сначала перейди туда, где он лежит):
 
 ```bash
+cd ~/Downloads
 tar -xzf FrimerLauncher-linux-x64.tar.gz
-./"Frimer Launcher/bin/Frimer Launcher"
+./frimer-launcher/run.sh
 ```
 
 macOS (первый запуск — правый клик по `Frimer Launcher.app` → «Открыть»,
@@ -98,6 +99,7 @@ java -jar FrimerLauncher.jar
 - **Разбор крашей**: причина, подсказки по частым проблемам (RAM, Mixin, Java, драйверы) и текст отчёта.
 - Консоль игры прямо в окне, принудительное закрытие процесса вместе с дочерними.
 - **Друзья**: код, запросы, статус онлайн, чат, обмен сборками и приглашения на сервер.
+- Linux-сборка запускается одной командой `./run.sh` из архива.
 
 **Сервера**
 - Ядра: **Paper, Vanilla, Fabric, Forge, NeoForge** — установка через официальные API и инсталляторы.

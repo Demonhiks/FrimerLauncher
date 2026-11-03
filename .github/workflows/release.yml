@@ -63,7 +63,27 @@ jobs:
           echo "app-version: $VER"
           mkdir -p staging && cp target/FrimerLauncher.jar staging/
           jpackage --type app-image --name "Frimer Launcher" --app-version "$VER" --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging/frimer.png --dest dist --vendor Frimer
-          tar -czf "${{ matrix.asset }}" -C dist "Frimer Launcher"
+          if [ $? -ne 0 ]; then echo "jpackage failed"; exit 1; fi
+          # папка без пробелов + скрипт запуска: в консоли это удобнее
+          mv "dist/Frimer Launcher" "dist/frimer-launcher"
+          printf '%s\n' '#!/bin/sh' \
+            '# Frimer Launcher — запуск без установки Java' \
+            'cd "$(dirname "$0")" || exit 1' \
+            'exec "./bin/Frimer Launcher" "$@"' > "dist/frimer-launcher/run.sh"
+          chmod +x "dist/frimer-launcher/run.sh"
+          printf '%s\n' \
+            'Frimer Launcher (Linux x64)' \
+            '' \
+            'Запуск:' \
+            '  ./run.sh' \
+            '' \
+            'Или напрямую:' \
+            '  "./bin/Frimer Launcher"' \
+            '' \
+            'Java устанавливать не нужно — она лежит в lib/runtime.' \
+            'Данные: ~/.frimerlauncher' > "dist/frimer-launcher/README.txt"
+          tar -czf "${{ matrix.asset }}" -C dist frimer-launcher
+          tar -tzf "${{ matrix.asset }}" | head -5
           ls -lh "${{ matrix.asset }}"
 
       - name: Package (macOS)
