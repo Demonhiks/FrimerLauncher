@@ -7,6 +7,9 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -40,6 +43,7 @@ public final class InstanceTile extends Ui.Card {
     private final JLabel nameLabel;
     private final JLabel subLabel;
     private boolean selected;
+    private boolean runningState;
 
     public InstanceTile(Instance instance, Theme theme, Handler handler) {
         super(theme.card, theme.border);
@@ -116,6 +120,31 @@ public final class InstanceTile extends Ui.Card {
 
     public Instance instance() {
         return instance;
+    }
+
+    /** Показать зелёную точку: сборка сейчас запущена. */
+    public void setRunning(boolean running) {
+        this.runningState = running;
+        repaint();
+    }
+
+    public boolean isRunningState() {
+        return runningState;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (!runningState) {
+            return;
+        }
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(theme.ok);
+        g2.fillOval(getWidth() - 20, 12, 8, 8);
+        g2.setColor(theme.bg);
+        g2.drawOval(getWidth() - 20, 12, 8, 8);
+        g2.dispose();
     }
 
     public void setDisplayName(String name) {

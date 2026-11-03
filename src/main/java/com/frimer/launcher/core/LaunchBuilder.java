@@ -25,6 +25,13 @@ public final class LaunchBuilder {
 
     public static List<String> build(Path versionJson, Path instDir, Path java,
                                      String nickname, int ramMb) {
+        return build(versionJson, instDir, java, nickname, ramMb,
+                Utils.offlineUuid(nickname), "0");
+    }
+
+    /** Вариант с данными аккаунта: uuid и токен (для лицензионного входа). */
+    public static List<String> build(Path versionJson, Path instDir, Path java, String nickname,
+                                     int ramMb, String uuid, String accessToken) {
         Map<String, Object> info = Json.readFileQuiet(versionJson);
         if (info == null) {
             throw new RuntimeException("Не читается JSON версии: " + versionJson);
@@ -108,7 +115,7 @@ public final class LaunchBuilder {
         }
         extractNatives(info, nativesDir);
 
-        Sub sub = new Sub(info, instDir, nativesDir, nickname);
+        Sub sub = new Sub(info, instDir, nativesDir, nickname, uuid, accessToken);
         List<String> jvmArgs = new ArrayList<>();
         List<String> gameArgs = new ArrayList<>();
         Object args = info.get("arguments");
@@ -143,22 +150,24 @@ public final class LaunchBuilder {
         cmd.add(mainClass);
 
         if (gameArgs.isEmpty()) {
-            gameArgs.addAll(defaultGameArgs(nickname, versionId, instDir, assetIndexId));
+            gameArgs.addAll(defaultGameArgs(nickname, versionId, instDir, assetIndexId,
+                    uuid, accessToken));
         }
         cmd.addAll(gameArgs);
         return cmd;
     }
 
     public static List<String> defaultGameArgs(String nickname, String versionId, Path instDir,
-                                               String assetIndexId) {
+                                               String assetIndexId, String uuid,
+                                               String accessToken) {
         return List.of(
                 "--username", nickname,
                 "--version", versionId,
                 "--gameDir", instDir.toString(),
                 "--assetsDir", Dirs.ASSETS_DIR.toString(),
                 "--assetIndex", assetIndexId,
-                "--uuid", Utils.offlineUuid(nickname),
-                "--accessToken", "0",
+                "--uuid", uuid,
+                "--accessToken", accessToken,
                 "--userType", "legacy");
     }
 
@@ -172,12 +181,17 @@ public final class LaunchBuilder {
         private final Path gameDir;
         private final Path nativesDir;
         private final String nickname;
+        private final String uuid;
+        private final String accessToken;
 
-        Sub(Map<String, Object> info, Path gameDir, Path nativesDir, String nickname) {
+        Sub(Map<String, Object> info, Path gameDir, Path nativesDir, String nickname, String uuid,
+            String accessToken) {
             this.info = info;
             this.gameDir = gameDir;
             this.nativesDir = nativesDir;
             this.nickname = nickname;
+            this.uuid = uuid;
+            this.accessToken = accessToken;
         }
 
         String apply(String s) {
@@ -187,9 +201,9 @@ public final class LaunchBuilder {
             repl.put("${game_directory}", gameDir.toString());
             repl.put("${assets_root}", Dirs.ASSETS_DIR.toString());
             repl.put("${assets_index_name}", Json.str(info.get("assets"), "legacy"));
-            repl.put("${auth_uuid}", Utils.offlineUuid(nickname));
-            repl.put("${auth_access_token}", "0");
-            repl.put("${auth_session}", "0");
+            repl.put("${auth_uuid}", uuid);
+            repl.put("${auth_access_token}", accessToken);
+            repl.put("${auth_session}", accessToken);
             repl.put("${user_type}", "legacy");
             repl.put("${version_type}", Json.str(info.get("type"), "release"));
             repl.put("${natives_directory}", nativesDir.toString());

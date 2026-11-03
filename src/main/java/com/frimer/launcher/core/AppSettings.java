@@ -10,7 +10,7 @@ public final class AppSettings {
 
     private static final Preferences PREFS = Preferences.userRoot().node("com/frimer/launcher");
 
-    public static final String APP_VERSION = "2.2.0";
+    public static final String APP_VERSION = "2.3.0";
 
     private AppSettings() {
     }
@@ -90,6 +90,16 @@ public final class AppSettings {
         List<String> history = nicknameHistory();
         history.remove(nick);
         PREFS.put("nick_history", Json.write(history, false));
+    }
+
+    /** Любая строковая настройка по ключу. */
+    public static String pref(String key, String fallback) {
+        return PREFS.get(key, fallback);
+    }
+
+    /** Сохранить строковую настройку. */
+    public static void setPref(String key, String value) {
+        PREFS.put(key, value == null ? "" : value);
     }
 
     public static void flush() {

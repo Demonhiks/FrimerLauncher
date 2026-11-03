@@ -21,10 +21,22 @@ public final class ServerInstance {
     public boolean autoPlayit;
     public boolean eula;
     public String loaderVersion;
+    public boolean autoRestart;
+    public int restartDelay;
+    public int rconPort;
+    public String rconPassword;
 
     public ServerInstance(Path folder, String name, String mcVersion, String core, int ramMb,
                           int port, String playitAddress, boolean autoPlayit, boolean eula,
                           String loaderVersion) {
+        this(folder, name, mcVersion, core, ramMb, port, playitAddress, autoPlayit, eula,
+                loaderVersion, true, 15, port + 10, "");
+    }
+
+    public ServerInstance(Path folder, String name, String mcVersion, String core, int ramMb,
+                          int port, String playitAddress, boolean autoPlayit, boolean eula,
+                          String loaderVersion, boolean autoRestart, int restartDelay,
+                          int rconPort, String rconPassword) {
         this.folder = folder;
         this.name = name;
         this.mcVersion = mcVersion;
@@ -35,6 +47,10 @@ public final class ServerInstance {
         this.autoPlayit = autoPlayit;
         this.eula = eula;
         this.loaderVersion = loaderVersion == null ? "" : loaderVersion;
+        this.autoRestart = autoRestart;
+        this.restartDelay = Math.max(5, restartDelay);
+        this.rconPort = rconPort <= 0 ? port + 10 : rconPort;
+        this.rconPassword = rconPassword == null ? "" : rconPassword;
     }
 
     public String coreLabel() {
@@ -79,6 +95,10 @@ public final class ServerInstance {
         data.put("auto_playit", autoPlayit);
         data.put("eula", eula);
         data.put("loader_version", loaderVersion);
+        data.put("auto_restart", autoRestart);
+        data.put("restart_delay", restartDelay);
+        data.put("rcon_port", rconPort);
+        data.put("rcon_password", rconPassword);
         Json.writeFileQuiet(folder.resolve("server.json"), data);
     }
 
@@ -100,7 +120,11 @@ public final class ServerInstance {
                 Json.str(d.get("playit_address"), ""),
                 Json.bool(d.get("auto_playit"), true),
                 Json.bool(d.get("eula"), true),
-                Json.str(d.get("loader_version"), ""));
+                Json.str(d.get("loader_version"), ""),
+                Json.bool(d.get("auto_restart"), true),
+                Json.integer(d.get("restart_delay"), 15),
+                Json.integer(d.get("rcon_port"), 0),
+                Json.str(d.get("rcon_password"), ""));
     }
 
     public static List<ServerInstance> loadAll() {

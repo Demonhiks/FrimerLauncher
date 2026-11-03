@@ -40,12 +40,13 @@ public final class SkinDialog extends Ui.FramelessDialog {
     private final List<Instance> instances;
     private final DefaultListModel<Map<String, Object>> model = new DefaultListModel<>();
     private final JList<Map<String, Object>> list = new JList<>(model);
-    private final JLabel preview = new JLabel();
+    private final SkinPreview3D preview;
     private final JLabel info = new JLabel();
 
     public SkinDialog(JFrame owner, Theme theme, List<Instance> instances) {
         super(owner, "Скины", true, theme);
         this.theme = theme;
+        this.preview = new SkinPreview3D(theme);
         this.instances = instances;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -61,9 +62,7 @@ public final class SkinDialog extends Ui.FramelessDialog {
         JScrollPane listScroll = Ui.borderlessScroll(list, theme);
         listScroll.setPreferredSize(new Dimension(280, 380));
 
-        preview.setPreferredSize(new Dimension(160, 320));
-        preview.setHorizontalAlignment(SwingConstants.CENTER);
-        preview.setVerticalAlignment(SwingConstants.TOP);
+        preview.setPreferredSize(new Dimension(220, 320));
         info.setFont(Theme.uiFont(Font.PLAIN, 12));
         info.setForeground(theme.muted);
         info.setVerticalAlignment(SwingConstants.TOP);
@@ -123,7 +122,7 @@ public final class SkinDialog extends Ui.FramelessDialog {
     private void updatePreview() {
         Map<String, Object> entry = list.getSelectedValue();
         if (entry == null) {
-            preview.setIcon(null);
+            preview.setSkin(null);
             info.setText("<html><body style='width:240px'>Скинов пока нет.<br><br>"
                     + "Добавь PNG (64×64 или 64×32) из файла или скачай по нику лицензионного игрока."
                     + "</body></html>");
@@ -131,13 +130,11 @@ public final class SkinDialog extends Ui.FramelessDialog {
         }
         byte[] data = Skins.readSkin(entry);
         if (data == null) {
-            preview.setIcon(null);
+            preview.setSkin(null);
             info.setText("Файл скина не найден.");
             return;
         }
-        byte[] png = Skins.renderPreviewPng(data, 260);
-        Icon icon = Ui.imageIcon(png, 260);
-        preview.setIcon(icon);
+        preview.setSkin(data);
         info.setText("<html><body style='width:240px'><b>"
                 + escape(com.frimer.launcher.core.Json.str(entry.get("name"), "Скин"))
                 + "</b><br>источник: "

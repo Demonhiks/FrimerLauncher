@@ -51,6 +51,37 @@ public final class Http {
         return resp.body();
     }
 
+    /** POST с телом (JSON или form-urlencoded). */
+    public static String post(String url, String body, String contentType,
+                              Map<String, String> headers) {
+        HttpRequest.Builder b;
+        try {
+            b = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30));
+        } catch (IllegalArgumentException e) {
+            throw new ApiException("Некорректный URL: " + url, 0);
+        }
+        b.header("User-Agent", UA);
+        b.header("Content-Type", contentType);
+        for (Map.Entry<String, String> e : headers.entrySet()) {
+            b.header(e.getKey(), e.getValue());
+        }
+        b.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+        try {
+            HttpResponse<String> resp = CLIENT.send(b.build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
+                throw new ApiException("HTTP " + resp.statusCode() + " для " + url + ": "
+                        + resp.body(), resp.statusCode());
+            }
+            return resp.body();
+        } catch (IOException e) {
+            throw new ApiException("Не могу подключиться к " + url + ": " + e.getMessage(), 0);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException("Запрос прерван: " + url, 0);
+        }
+    }
+
     /** Текст или null, если запрос не удался (без исключений). */
     public static String getQuiet(String url) {
         try {

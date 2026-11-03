@@ -28,7 +28,7 @@ public final class SettingsDialog extends Ui.FramelessDialog {
 
     private final Theme theme;
     private final JTextField nickField;
-    private final JComboBox<String> themeCombo = new JComboBox<>(new String[]{"dark", "light"});
+    private final JComboBox<String> themeCombo = new JComboBox<>(com.frimer.launcher.core.Themes.names().toArray(new String[0]));
     private final JSlider ramSlider = new JSlider(1024, 16384, AppSettings.defaultRamMb());
     private final JLabel ramLabel = new JLabel();
     private boolean saved;
@@ -54,9 +54,35 @@ public final class SettingsDialog extends Ui.FramelessDialog {
         root.add(fieldLabel("Тема оформления"));
         themeCombo.setSelectedItem(AppSettings.theme());
         Ui.styleCombo(themeCombo, theme);
+        JButton themesFolder = Ui.miniButton("Папка тем", theme);
+        themesFolder.addActionListener(e -> {
+            try {
+                java.nio.file.Files.createDirectories(com.frimer.launcher.core.Themes.dir());
+            } catch (java.io.IOException ignored) {
+                // папку создаст экспорт
+            }
+            Ui.openFolder(com.frimer.launcher.core.Themes.dir());
+        });
+        JButton exportTheme = Ui.miniButton("Экспорт темы", theme);
+        exportTheme.addActionListener(e -> {
+            try {
+                java.nio.file.Path file = com.frimer.launcher.core.Themes.export(
+                        theme, "my-theme");
+                JOptionPane.showMessageDialog(this,
+                        "Тема сохранена:\n" + file + "\n\nОтредактируйте цвета и выберите её в списке.",
+                        "Экспорт темы", JOptionPane.INFORMATION_MESSAGE);
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        JPanel themeTools = Ui.buttonRow(themesFolder, exportTheme);
+        themeTools.setAlignmentX(Component.LEFT_ALIGNMENT);
         themeCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         themeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
         root.add(themeCombo);
+        root.add(Box.createVerticalStrut(6));
+        root.add(themeTools);
         root.add(Box.createVerticalStrut(12));
 
         root.add(fieldLabel("Память по умолчанию для новых сборок"));

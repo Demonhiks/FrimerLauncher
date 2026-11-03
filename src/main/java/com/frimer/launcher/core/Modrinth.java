@@ -22,6 +22,7 @@ public final class Modrinth {
     public static final String RESOURCEPACK = "resourcepack";
     public static final String DATAPACK = "datapack";
     public static final String PLUGIN = "plugin";
+    public static final String MODPACK = "modpack";
 
     /** Проект в результатах поиска. */
     public record Hit(String id, String slug, String title, String author, String description,
@@ -51,6 +52,39 @@ public final class Modrinth {
         }
     }
 
+    /** Файл сборки (.mrpack) последней release-версии проекта. */
+    public record FileRef(String url, String filename, String version) {
+    }
+
+    /** Найти .mrpack последней release-версии модпака. */
+    public static FileRef modpackFile(String projectId) {
+        List<Object> versions = Json.arr(Json.parse(Http.get(API + "/project/" + projectId
+                + "/version")));
+        Map<String, Object> release = null;
+        for (Object o : versions) {
+            Map<String, Object> version = Json.obj(o);
+            if ("release".equals(Json.str(version.get("version_type"), ""))) {
+                release = version;
+                break;
+            }
+        }
+        if (release == null && !versions.isEmpty()) {
+            release = Json.obj(versions.get(0));
+        }
+        if (release == null) {
+            throw new RuntimeException("У проекта нет версий");
+        }
+        for (Object o : Json.arr(release.get("files"))) {
+            Map<String, Object> file = Json.obj(o);
+            String name = Json.str(file.get("filename"), "");
+            if (name.toLowerCase(java.util.Locale.ROOT).endsWith(".mrpack")) {
+                return new FileRef(Json.str(file.get("url"), ""), name,
+                        Json.str(release.get("version_number"), "?"));
+            }
+        }
+        throw new RuntimeException("В версии нет .mrpack файла");
+    }
+
     public static String labelFor(String projectType) {
         switch (projectType) {
             case SHADER:
@@ -61,6 +95,8 @@ public final class Modrinth {
                 return "Датапаки";
             case PLUGIN:
                 return "Плагины";
+            case MODPACK:
+                return "Сборки";
             default:
                 return "Моды";
         }

@@ -105,6 +105,22 @@ public final class Utils {
         return cut.replaceAll("\\s+$", "") + "...";
     }
 
+    /** Убрать эмодзи и служебные символы — их нет в шрифте, выходят «квадратики». */
+    public static String plainText(String text) {
+        if (text == null) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (Character.isSurrogate(c) || Character.isISOControl(c)) {
+                continue;
+            }
+            out.append(c);
+        }
+        return out.toString();
+    }
+
     public static String fmtGb(int ramMb) {
         double gb = ramMb / 1024.0;
         if (gb == Math.rint(gb)) {

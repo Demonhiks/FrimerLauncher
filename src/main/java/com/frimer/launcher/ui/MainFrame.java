@@ -64,10 +64,10 @@ public final class MainFrame extends JFrame {
     private ServerInstance currentServer;
     private boolean serverTab;
 
-    private GameLauncher gameLauncher;
+    private final java.util.Map<java.nio.file.Path, GameLauncher> running =
+            new java.util.LinkedHashMap<>();
     private ServerRunner serverRunner;
     private ServerConsoleDialog serverConsole;
-    private volatile boolean gameRunning;
     private String playitAddress = "";
 
     // сайдбар
@@ -79,6 +79,7 @@ public final class MainFrame extends JFrame {
     private JButton delInstButton;
     private JButton settingsButton;
     private JButton importButton;
+    private JButton modpackButton;
     private JButton newSrvButton;
     private JButton delSrvButton;
 
@@ -93,6 +94,11 @@ public final class MainFrame extends JFrame {
     private JPanel titleBlock;
     private JPanel actionRowPanel;
     private Ui.IconButton changelogButton;
+    private static final java.util.regex.Pattern TPS_LINE = java.util.regex.Pattern.compile(
+            "TPS from last 1m, 5m, 15m:\\s*([0-9.,*]+)");
+    private final java.util.Map<Path, String> serverTps = new java.util.HashMap<>();
+    private final java.util.Map<Path, Integer> serverOnline = new java.util.HashMap<>();
+    private final java.util.Map<Path, Integer> restartAttempts = new java.util.HashMap<>();
     private JLabel titleLabel;
     private JLabel subLabel;
     private JLabel statusLabel;
@@ -110,7 +116,7 @@ public final class MainFrame extends JFrame {
 
     public MainFrame() {
         super("Frimer");
-        theme = Theme.of(AppSettings.theme());
+        theme = com.frimer.launcher.core.Themes.load(AppSettings.theme());
         applyUiDefaults(theme);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         java.awt.Rectangle bounds = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -276,7 +282,7 @@ public final class MainFrame extends JFrame {
         nickButton.setHorizontalAlignment(SwingConstants.LEFT);
         nickButton.setFont(Theme.uiFont(Font.BOLD, 14));
         nickButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        nickButton.addActionListener(e -> showNickMenu());
+        nickButton.addActionListener(e -> openAccounts());
         refreshNickButton();
 
         JButton skinsButton = Ui.miniButton("Скины", theme);
@@ -337,6 +343,12 @@ public final class MainFrame extends JFrame {
         importButton.addActionListener(e -> chooseModpack());
         importButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(importButton);
+        sidebar.add(Box.createVerticalStrut(6));
+
+        modpackButton = Ui.miniButton("Сборки с Modrinth", theme);
+        modpackButton.addActionListener(e -> openModpacks());
+        modpackButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(modpackButton);
 
         newSrvButton = Ui.primaryButton("Создать сервер", theme);
         newSrvButton.addActionListener(e -> createServer());
@@ -699,6 +711,7 @@ public final class MainFrame extends JFrame {
         if (current != null && current.folder.equals(inst.folder)) {
             tile.setSelected(true);
         }
+        tile.setRunning(isInstanceRunning(inst));
         return tile;
     }
 
@@ -783,7 +796,7 @@ public final class MainFrame extends JFrame {
         heroSub.setText(inst.loader + " " + inst.mcVersion);
         updateHeroChips(inst);
         updateHeroVisibility();
-        playButton.setEnabled(!gameRunning);
+        playButton.setEnabled(!isInstanceRunning(inst));
         setStatus("Готов");
         setFraction(0, 0);
     }
@@ -831,11 +844,12 @@ public final class MainFrame extends JFrame {
         delInstButton.setVisible(!toServers);
         settingsButton.setVisible(!toServers);
         importButton.setVisible(!toServers);
+        modpackButton.setVisible(!toServers);
         newSrvButton.setVisible(toServers);
         delSrvButton.setVisible(toServers);
 
         playButton.setVisible(!toServers);
-        killButton.setVisible(!toServers && gameRunning);
+        killButton.setVisible(!toServers && isInstanceRunning(current));
         startSrvButton.setVisible(toServers);
         stopSrvButton.setVisible(toServers);
         consoleButton.setVisible(toServers);
@@ -868,7 +882,9 @@ public final class MainFrame extends JFrame {
     // =================================================================== ник
 
     private void refreshNickButton() {
-        nickButton.setText(AppSettings.nickname());
+        com.frimer.launcher.core.Accounts.Account active =
+                com.frimer.launcher.core.Accounts.active();
+        nickButton.setText(active.name + (active.microsoft() ? "  · MS" : ""));
         nickButton.setIcon(Ui.chevron(theme, false));
         nickButton.setHorizontalTextPosition(SwingConstants.LEFT);
         nickButton.setIconTextGap(10);
@@ -974,6 +990,7 @@ public final class MainFrame extends JFrame {
         items.add(Ui.MenuItemSpec.of("Найти моды…", () -> openModrinth(inst)));
         items.add(Ui.MenuItemSpec.of("Миры", () -> openWorlds(inst)));
         items.add(Ui.MenuItemSpec.of("Скрины", () -> openScreenshots(inst)));
+        items.add(Ui.MenuItemSpec.of("Проверить файлы", () -> openIntegrity(inst)));
         items.add(Ui.MenuItemSpec.of("Изменить", () -> editInstance(inst)));
         items.add(Ui.MenuItemSpec.of("Дублировать", () -> duplicateInstance(inst)));
         items.add(Ui.MenuItemSpec.of("Открыть папку", () -> Ui.openFolder(inst.folder)));
@@ -1006,6 +1023,12 @@ public final class MainFrame extends JFrame {
         dialog.showDialog();
     }
 
+    /** Проверка целостности файлов сборки с починкой. */
+    private void openIntegrity(Instance inst) {
+        IntegrityDialog dialog = new IntegrityDialog(this, theme, inst);
+        dialog.showDialog();
+    }
+
     /** Галерея скриншотов сборки. */
     private void openScreenshots(Instance inst) {
         ScreenshotsDialog dialog = new ScreenshotsDialog(this, theme, inst);
@@ -1031,19 +1054,19 @@ public final class MainFrame extends JFrame {
 
     // =================================================================== игра
 
+    /** Запустить выбранную сборку (можно несколько одновременно). */
     private void play() {
-        if (current == null || gameRunning) {
+        Instance inst = current;
+        if (inst == null) {
             return;
         }
-        Instance inst = current;
-        gameRunning = true;
-        playButton.setEnabled(false);
-        playButton.setText("Запускаю...");
-        killButton.setVisible(true);
-        setStatus("Готовлю запуск...");
-        appendLog("=== Запуск " + inst.name + " (" + inst.loader + " " + inst.mcVersion + ") ===");
-
-        gameLauncher = new GameLauncher(inst, AppSettings.nickname(), new GameLauncher.Listener() {
+        GameLauncher existing = running.get(inst.folder);
+        if (existing != null && existing.isRunning()) {
+            setStatus("Сборка «" + inst.name + "» уже запущена");
+            return;
+        }
+        GameLauncher launcher = new GameLauncher(inst, com.frimer.launcher.core.Accounts.active(),
+                new GameLauncher.Listener() {
             @Override
             public void onStatus(String status) {
                 SwingUtilities.invokeLater(() -> setStatus(status));
@@ -1056,13 +1079,13 @@ public final class MainFrame extends JFrame {
 
             @Override
             public void onLog(String line) {
-                appendLog(line);
+                appendLog("[" + inst.name + "] " + line);
             }
 
             @Override
             public void onGameStarted(long timestamp) {
                 SwingUtilities.invokeLater(() -> {
-                    setStatus("Игра запущена");
+                    setStatus("Игра запущена: " + inst.name);
                     setFraction(0, 0);
                 });
             }
@@ -1070,24 +1093,22 @@ public final class MainFrame extends JFrame {
             @Override
             public void onFinished(int code) {
                 SwingUtilities.invokeLater(() -> {
-                    gameRunning = false;
-                    playButton.setEnabled(true);
-                    playButton.setText("Играть");
-                    killButton.setVisible(false);
-                    setStatus("Игра закрыта (код " + code + ")");
-                    selectInstance(inst);
+                    running.remove(inst.folder);
+                    refreshRunningUi();
+                    setStatus("Игра закрыта: " + inst.name + " (код " + code + ")");
+                    if (current != null && current.folder.equals(inst.folder)) {
+                        selectInstance(inst);
+                    }
                 });
             }
 
             @Override
             public void onFailed(String error) {
                 SwingUtilities.invokeLater(() -> {
-                    gameRunning = false;
-                    playButton.setEnabled(true);
-                    playButton.setText("Играть");
-                    killButton.setVisible(false);
+                    running.remove(inst.folder);
+                    refreshRunningUi();
                     setFraction(0, 0);
-                    setStatus("Ошибка запуска");
+                    setStatus("Ошибка запуска: " + inst.name);
                     appendLog("ОШИБКА: " + error);
                     logScroll.setVisible(true);
                     JOptionPane.showMessageDialog(MainFrame.this, error, "Не удалось запустить игру",
@@ -1104,15 +1125,51 @@ public final class MainFrame extends JFrame {
                 });
             }
         });
-        gameLauncher.start();
+        running.put(inst.folder, launcher);
+        refreshRunningUi();
+        setStatus("Готовлю запуск «" + inst.name + "»...");
+        appendLog("=== Запуск " + inst.name + " (" + inst.loader + " " + inst.mcVersion + ") ===");
+        launcher.start();
+    }
+
+    /** Запущена ли эта сборка. */
+    private boolean isInstanceRunning(Instance inst) {
+        if (inst == null) {
+            return false;
+        }
+        GameLauncher launcher = running.get(inst.folder);
+        return launcher != null && launcher.isRunning();
+    }
+
+    /** Обновить кнопки, плитки и счётчик после запуска/остановки сборок. */
+    private void refreshRunningUi() {
+        boolean runningHere = isInstanceRunning(current);
+        if (playButton != null) {
+            playButton.setEnabled(!runningHere);
+        }
+        if (killButton != null) {
+            killButton.setVisible(!serverTab && runningHere);
+        }
+        if (progressLabel != null) {
+            progressLabel.setText(running.isEmpty() ? "" : "запущено: " + running.size());
+        }
+        rebuildTiles();
     }
 
     private void killGame() {
-        if (gameLauncher != null && gameLauncher.killGame()) {
-            setStatus("Minecraft закрывается...");
+        Instance inst = current;
+        if (inst == null) {
+            return;
+        }
+        GameLauncher launcher = running.get(inst.folder);
+        if (launcher != null && launcher.killGame()) {
+            setStatus("Minecraft закрывается (" + inst.name + ")...");
         }
     }
 
+    private String currentAccountName() {
+        return com.frimer.launcher.core.Accounts.active().name;
+    }
     // =================================================================== сервера
 
     private void createServer() {
@@ -1198,6 +1255,7 @@ public final class MainFrame extends JFrame {
                         public void onLog(String line) {
                             appendLog(line);
                             detectPlayitAddress(line);
+                            trackServerMetrics(srv, line);
                             SwingUtilities.invokeLater(() -> {
                                 if (serverConsole != null) {
                                     serverConsole.appendLog(line);
@@ -1218,12 +1276,32 @@ public final class MainFrame extends JFrame {
 
                         @Override
                         public void onStopped(int code) {
+                            boolean killed = serverRunner != null && serverRunner.killRequested();
                             SwingUtilities.invokeLater(() -> {
                                 stopSrvButton.setEnabled(false);
                                 startSrvButton.setEnabled(true);
                                 setStatus("Сервер остановлен (код " + code + ")");
                                 if (serverConsole != null) {
                                     serverConsole.setRunning(false);
+                                }
+                                if (srv.autoRestart && code != 0 && !killed) {
+                                    int attempts = restartAttempts.merge(srv.folder, 1, Integer::sum);
+                                    if (attempts <= 3) {
+                                        int delay = Math.max(5, srv.restartDelay);
+                                        appendLog("[auto] падение (код " + code + "), перезапуск через "
+                                                + delay + " с, попытка " + attempts);
+                                        javax.swing.Timer timer = new javax.swing.Timer(delay * 1000,
+                                                ev -> {
+                                                    ((javax.swing.Timer) ev.getSource()).stop();
+                                                    launchServerProcess();
+                                                });
+                                        timer.setRepeats(false);
+                                        timer.start();
+                                    } else {
+                                        appendLog("[auto] перезапуски остановлены: частые падения");
+                                    }
+                                } else if (code == 0) {
+                                    restartAttempts.remove(srv.folder);
                                 }
                             });
                         }
@@ -1250,6 +1328,32 @@ public final class MainFrame extends JFrame {
                     setStatus("Ошибка Java для сервера");
                     appendLog("ОШИБКА: " + e.getMessage());
                 });
+            }
+        });
+    }
+
+    /** Достать TPS и число игроков из строк лога сервера. */
+    private void trackServerMetrics(ServerInstance srv, String line) {
+        if (line == null) {
+            return;
+        }
+        java.util.regex.Matcher matcher = TPS_LINE.matcher(line);
+        if (matcher.find()) {
+            serverTps.put(srv.folder, matcher.group(1));
+        }
+        if (line.contains("joined the game")) {
+            serverOnline.merge(srv.folder, 1, Integer::sum);
+        } else if (line.contains("left the game")) {
+            serverOnline.merge(srv.folder, -1, Integer::sum);
+        }
+        String tps = serverTps.get(srv.folder);
+        Integer online = serverOnline.get(srv.folder);
+        if (tps == null && online == null) {
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            if (serverConsole != null) {
+                serverConsole.setMetrics(tps, online == null ? -1 : Math.max(0, online));
             }
         });
     }
@@ -1367,8 +1471,28 @@ public final class MainFrame extends JFrame {
         }
     }
 
+    /** Окно аккаунтов: офлайн-ники и вход Microsoft. */
+    private void openAccounts() {
+        AccountsDialog dialog = new AccountsDialog(this, theme, () -> {
+            refreshNickButton();
+            setStatus("Аккаунт: " + com.frimer.launcher.core.Accounts.active().name);
+        });
+        dialog.showDialog();
+        refreshNickButton();
+    }
+
     private void openSkins() {
         SkinDialog dialog = new SkinDialog(this, theme, new ArrayList<>(instances));
+        dialog.showDialog();
+    }
+
+    /** Поиск готовых сборок на Modrinth. */
+    private void openModpacks() {
+        ModpackBrowserDialog dialog = new ModpackBrowserDialog(this, theme, instance -> {
+            refreshInstances();
+            selectInstance(instance);
+            setStatus("Сборка «" + instance.name + "» установлена");
+        });
         dialog.showDialog();
     }
 
@@ -1504,7 +1628,7 @@ public final class MainFrame extends JFrame {
 
     private void updatePresenceLabels() {
         if (current != null) {
-            playButton.setEnabled(!gameRunning);
+            playButton.setEnabled(!isInstanceRunning(current));
         }
     }
 
@@ -1524,14 +1648,36 @@ public final class MainFrame extends JFrame {
         }
     }
 
-    /** Показать «что нового», если версия ещё не просмотрена. */
+    /** Показать «что нового», если версия ещё не просмотрена, и проверить обновления. */
     public void afterShow() {
         if (hasUnseenChanges()) {
             openChangelog();
         }
+        startUpdateCheck();
+    }
+
+    /** Фоновая проверка обновлений: окно показываем, только если версия новее. */
+    private void startUpdateCheck() {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            com.frimer.launcher.core.Updater.Info info = com.frimer.launcher.core.Updater.latest();
+            if (info != null) {
+                SwingUtilities.invokeLater(() -> {
+                    UpdateDialog dialog = new UpdateDialog(this, theme, info);
+                    dialog.showDialog();
+                });
+            }
+        }, "frimer-updater");
+        thread.setDaemon(true);
+        thread.start();
     }
     private void onClose() {
-        if (gameRunning) {
+        if (!running.isEmpty()) {
             int answer = JOptionPane.showConfirmDialog(this,
                     "Minecraft ещё запущен. Закрыть его и выйти?",
                     "Игра работает", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -1539,7 +1685,9 @@ public final class MainFrame extends JFrame {
                 return;
             }
             if (answer == JOptionPane.YES_OPTION) {
-                killGame();
+                for (GameLauncher launcher : new java.util.ArrayList<>(running.values())) {
+                    launcher.killGame();
+                }
             }
         }
         if (isServerRunning()) {

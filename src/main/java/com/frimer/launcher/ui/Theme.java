@@ -89,6 +89,20 @@ public final class Theme {
         return "light".equals(name) ? Theme.rgb("#e07f08") : Theme.rgb("#f29a16");
     }
 
+    /** Тема из готовых цветов (для пользовательских JSON-тем). */
+    public static Theme custom(String name, Color bg, Color sidebar, Color card, Color cardSel,
+                               Color border, Color text, Color muted, Color accent, Color accentDark,
+                               Color accentLight, Color input, Color err, Color warn, Color ok,
+                               Color hover, Color disabledText) {
+        return new Theme(name, hex(bg), hex(sidebar), hex(card), hex(cardSel), hex(border),
+                hex(text), hex(muted), hex(accent), hex(accentDark), hex(accentLight), hex(input),
+                hex(err), hex(warn), hex(ok), hex(hover), hex(disabledText));
+    }
+
+    private static String hex(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
     public static Theme of(String name) {
         return "light".equalsIgnoreCase(name) ? LIGHT : DARK;
     }

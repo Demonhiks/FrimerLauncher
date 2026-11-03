@@ -56,15 +56,23 @@ public final class ModrinthDialog extends Ui.FramelessDialog {
 
     private volatile boolean busy;
 
-    public ModrinthDialog(JFrame owner, Theme theme, Instance instance, String projectType, Path dest) {
+    public ModrinthDialog(JFrame owner, Theme theme, Instance instance, String projectType,
+                          Path dest) {
+        this(owner, theme, instance == null ? "" : instance.mcVersion,
+                instance == null || "Vanilla".equals(instance.loader) ? "" : instance.loader,
+                projectType, dest);
+    }
+
+    public ModrinthDialog(JFrame owner, Theme theme, String mcVersion, String loader,
+                          String projectType, Path dest) {
         super(owner, "Modrinth — " + Modrinth.labelFor(projectType), true, theme);
         this.theme = theme;
         searchField = new Ui.Field(theme, "");
-        this.instance = instance;
+        this.instance = null;
         this.projectType = projectType;
         this.dest = dest;
-        this.mcVersion = instance == null ? "" : instance.mcVersion;
-        this.loader = instance == null || "Vanilla".equals(instance.loader) ? "" : instance.loader;
+        this.mcVersion = mcVersion == null ? "" : mcVersion;
+        this.loader = loader == null ? "" : loader;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel(new BorderLayout(0, 10));
@@ -404,7 +412,7 @@ public final class ModrinthDialog extends Ui.FramelessDialog {
             title.setText(value.title());
             meta.setText((value.author().isEmpty() ? "" : "автор: " + value.author())
                     + " · " + Utils.fmtNum(value.downloads()) + " загрузок");
-            description.setText(Utils.shortText(value.description(), 110));
+            description.setText(Utils.shortText(Utils.plainText(value.description()), 110));
             setBackground(isSelected ? theme.cardSel : theme.card);
             title.setForeground(isSelected ? theme.accent : theme.text);
             meta.setForeground(theme.muted);

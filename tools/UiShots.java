@@ -2,10 +2,14 @@ import com.frimer.launcher.core.Instance;
 import com.frimer.launcher.core.InstanceStore;
 import com.frimer.launcher.core.ServerInstance;
 import java.nio.file.Path;
+import com.frimer.launcher.ui.AccountsDialog;
 import com.frimer.launcher.ui.ChangelogDialog;
 import com.frimer.launcher.ui.CrashingDialog;
 import com.frimer.launcher.ui.EditInstanceDialog;
+import com.frimer.launcher.ui.IntegrityDialog;
 import com.frimer.launcher.ui.MainFrame;
+import com.frimer.launcher.ui.ModpackBrowserDialog;
+import com.frimer.launcher.ui.UpdateDialog;
 import com.frimer.launcher.ui.ModrinthDialog;
 import com.frimer.launcher.ui.ModsDialog;
 import com.frimer.launcher.ui.NewInstanceDialog;
@@ -159,6 +163,17 @@ public final class UiShots {
         }
         SwingUtilities.invokeAndWait(comboDialog::dispose);
 
+        capture(new AccountsDialog(frame, theme, null), "18-accounts", 640, 470, 500);
+        if (instance != null) {
+            capture(new IntegrityDialog(frame, theme, instance), "19-integrity", 620, 480, 2000);
+        }
+        capture(new ModpackBrowserDialog(frame, theme, null), "21-modpacks", 760, 560, 3000);
+        capture(new UpdateDialog(frame, theme, new com.frimer.launcher.core.Updater.Info("2.4.0",
+                "https://example.com/FrimerLauncher.jar",
+                "## Что нового\n- несколько сборок одновременно\n- проверка целостности\n"
+                        + "- аккаунты Microsoft\n- RCON и авто-рестарт",
+                "https://github.com/Demonhiks/FrimerLaunchers/releases/latest")),
+                "22-update", 600, 430, 400);
         capture(new ChangelogDialog(frame, theme), "17-changelog", 560, 550, 700);
 
         SwingUtilities.invokeAndWait(frame::dispose);

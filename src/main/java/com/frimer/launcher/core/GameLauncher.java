@@ -43,6 +43,7 @@ public final class GameLauncher {
 
     private final Instance instance;
     private final String nickname;
+    private final Accounts.Account account;
     private final Listener listener;
 
     private volatile Process process;
@@ -50,8 +51,16 @@ public final class GameLauncher {
     private volatile long startedAt;
 
     public GameLauncher(Instance instance, String nickname, Listener listener) {
+        this(instance, new Accounts.Account(Accounts.Type.OFFLINE, nickname, "", "", "", 0),
+                listener);
+    }
+
+    public GameLauncher(Instance instance, Accounts.Account account, Listener listener) {
         this.instance = instance;
-        this.nickname = nickname;
+        this.account = account == null
+                ? new Accounts.Account(Accounts.Type.OFFLINE, "Player", "", "", "", 0)
+                : account;
+        this.nickname = this.account.name;
         this.listener = listener == null ? new Listener() {
         } : listener;
     }
@@ -104,7 +113,7 @@ public final class GameLauncher {
 
             instance.prepareFolders();
             List<String> cmd = LaunchBuilder.build(versionJson, instance.folder, java,
-                    nickname, instance.ramMb);
+                    nickname, instance.ramMb, account.launchUuid(), account.launchToken());
 
             listener.onLog("Запускаю игру...");
             log.accept(String.join(" ", cmd).length() > 2000 ? "команда запуска собрана" : "cmd: " + Utils.shortText(String.join(" ", cmd), 300));

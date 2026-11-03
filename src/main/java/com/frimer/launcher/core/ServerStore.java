@@ -109,6 +109,15 @@ public final class ServerStore {
         defaults.put("difficulty", "easy");
         defaults.put("pvp", "true");
         defaults.put("allow-flight", "true");
+        if (srv.rconPassword == null || srv.rconPassword.isBlank()) {
+            srv.rconPassword = Long.toHexString(java.util.concurrent.ThreadLocalRandom.current()
+                    .nextLong()).substring(0, 8);
+            srv.save();
+        }
+        defaults.put("enable-rcon", "true");
+        defaults.put("rcon.port", Integer.toString(srv.rconPort));
+        defaults.put("rcon.password", srv.rconPassword);
+        defaults.put("broadcast-rcon-to-ops", "true");
 
         Path props = srv.folder.resolve("server.properties");
         try {
