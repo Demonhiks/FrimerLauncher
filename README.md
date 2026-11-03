@@ -6,6 +6,23 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 
 ![Главное окно](docs/screenshot-main.png)
 
+## Скачать
+
+Готовый `FrimerLauncher.jar` собирается автоматически и лежит в разделе
+**[Releases](../../releases)**. Нужна **Java 17 или новее** — проверьте:
+
+```bat
+java -version
+```
+
+Запуск:
+
+```bat
+java -jar FrimerLauncher.jar
+```
+
+Если Java нет — поставьте [Eclipse Temurin 21 JRE](https://adoptium.net/temurin/releases/?package=jre).
+Собрать самому из исходников тоже можно — см. «Сборка и запуск» ниже.
 ## Возможности
 
 **Клиент**

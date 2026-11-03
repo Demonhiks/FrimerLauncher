@@ -1,0 +1,59 @@
+name: build-and-release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build jar
+        run: mvn -B -q package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrimerLauncher
+          path: target/FrimerLauncher.jar
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/FrimerLauncher.jar
+          body: |
+            ## Frimer Launcher
+
+            Minecraft-лаунчер: Vanilla / Fabric / Quilt / Forge / NeoForge, сервера, скины,
+            моды и браузер Modrinth.
+
+            ### Как запустить
+            1. Скачайте `FrimerLauncher.jar` ниже.
+            2. Нужна **Java 17 или новее** (проверить: `java -version`).
+            3. Запустите:
+
+            ```bat
+            java -jar FrimerLauncher.jar
+            ```
+
+            Данные лежат в `~/.mylauncher` (`C:\Users\<имя>\.mylauncher`) — сборки, сервера и
+            настройки из Python-версии подхватываются сами.
+
+            > Windows SmartScreen может предупредить о неизвестном издателе — это обычное
+            > поведение для jar без цифровой подписи, «Подробнее» → «Выполнить в любом случае».
