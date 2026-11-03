@@ -37,7 +37,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 /** Галерея скриншотов сборки: превью, открытие, копирование в буфер и удаление. */
-public final class ScreenshotsDialog extends JDialog {
+public final class ScreenshotsDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,7 +54,7 @@ public final class ScreenshotsDialog extends JDialog {
     private final JLabel info = new JLabel(" ");
 
     public ScreenshotsDialog(JFrame owner, Theme theme, Instance instance) {
-        super(owner, "Скрины — " + instance.name, true);
+        super(owner, "Скрины — " + instance.name, true, theme);
         this.theme = theme;
         this.instance = instance;
         this.folder = instance.folder.resolve("screenshots");

@@ -13,12 +13,12 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /** Окно с разбором краша: причина, подсказки и текст отчёта. */
-public final class CrashingDialog extends JDialog {
+public final class CrashingDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
     public CrashingDialog(JFrame owner, Theme theme, String summary, String body) {
-        super(owner, "Игра упала", true);
+        super(owner, "Игра упала", true, theme);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel(new BorderLayout(0, 10));

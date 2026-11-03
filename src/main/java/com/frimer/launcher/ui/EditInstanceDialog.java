@@ -20,7 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 /** Изменение названия и памяти сборки. */
-public final class EditInstanceDialog extends JDialog {
+public final class EditInstanceDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -33,7 +33,7 @@ public final class EditInstanceDialog extends JDialog {
     private boolean saved;
 
     public EditInstanceDialog(JFrame owner, Theme theme, Instance instance) {
-        super(owner, "Изменить сборку", true);
+        super(owner, "Изменить сборку", true, theme);
         this.theme = theme;
         nameField = new Ui.Field(theme, instance.name);
         this.instance = instance;

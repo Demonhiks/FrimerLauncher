@@ -1,6 +1,7 @@
 package com.frimer.launcher.ui;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -752,6 +754,204 @@ public final class Ui {
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
             g2.dispose();
             super.paintComponent(g);
+        }
+    }
+
+    /** Кнопка-иконка без рамки: при наведении подложка, опционально точка-бейдж. */
+    public static class IconButton extends JButton {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Theme theme;
+        private final Icon icon;
+        private boolean badge;
+
+        public IconButton(Theme theme, Icon icon) {
+            this.theme = theme;
+            this.icon = icon;
+            setPreferredSize(new Dimension(28, 28));
+            setMinimumSize(new Dimension(28, 28));
+            setMaximumSize(new Dimension(28, 28));
+            setBorderPainted(false);
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setOpaque(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        /** Показать акцентную точку (есть что-то новое). */
+        public void setBadge(boolean badge) {
+            this.badge = badge;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (getModel().isRollover()) {
+                g2.setColor(theme.hover);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+            }
+            if (icon != null) {
+                icon.paintIcon(this, g2, (getWidth() - icon.getIconWidth()) / 2,
+                        (getHeight() - icon.getIconHeight()) / 2);
+            }
+            if (badge) {
+                g2.setColor(theme.accent);
+                g2.fillOval(getWidth() - 8, 3, 6, 6);
+                g2.setColor(theme.bg);
+                g2.drawOval(getWidth() - 8, 3, 6, 6);
+            }
+            g2.dispose();
+        }
+    }
+
+    /** Крестик закрытия. */
+    public static ImageIcon closeIcon(Theme theme, int size) {
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setColor(theme.muted);
+        g.setStroke(new BasicStroke(Math.max(1.4f, size / 10f), BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND));
+        int pad = Math.max(3, size / 4);
+        g.drawLine(pad, pad, size - pad, size - pad);
+        g.drawLine(size - pad, pad, pad, size - pad);
+        g.dispose();
+        return new ImageIcon(img);
+    }
+
+    /** Иконка «что нового»: четырёхлучевая звёздочка. */
+    public static ImageIcon sparkleIcon(Theme theme, int size) {
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setColor(theme.accent);
+        double cx = size / 2.0;
+        double cy = size / 2.0;
+        double outer = size / 2.0 - 0.5;
+        double inner = outer * 0.34;
+        java.awt.geom.Path2D star = new java.awt.geom.Path2D.Double();
+        for (int i = 0; i < 8; i++) {
+            double r = i % 2 == 0 ? outer : inner;
+            double angle = Math.PI / 4 * i - Math.PI / 2;
+            double x = cx + r * Math.cos(angle);
+            double y = cy + r * Math.sin(angle);
+            if (i == 0) {
+                star.moveTo(x, y);
+            } else {
+                star.lineTo(x, y);
+            }
+        }
+        star.closePath();
+        g.fill(star);
+        g.dispose();
+        return new ImageIcon(img);
+    }
+
+    /**
+     * Безрамочное окно с тёмной шапкой: системный заголовок Windows светлый
+     * и выглядел белой полосой над тёмным содержимым.
+     */
+    public static class FramelessDialog extends javax.swing.JDialog {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Theme theme;
+        private final JPanel body;
+        private final JPanel headerPanel;
+        private java.awt.Point dragOffset;
+
+        public FramelessDialog(java.awt.Window owner, String title, boolean modal, Theme theme) {
+            super(owner, title, modal
+                    ? java.awt.Dialog.ModalityType.APPLICATION_MODAL
+                    : java.awt.Dialog.ModalityType.MODELESS);
+            this.theme = theme;
+            setUndecorated(true);
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+            JPanel rootPanel = new JPanel(new BorderLayout()) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(theme.bg);
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                    g2.setColor(theme.border);
+                    g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            rootPanel.setOpaque(false);
+
+            headerPanel = new JPanel(new BorderLayout());
+            JPanel header = headerPanel;
+            header.setBackground(theme.sidebar);
+            header.setBorder(new EmptyBorder(2, 6, 2, 6));
+
+            JLabel titleLabel = new JLabel(title);
+            titleLabel.setFont(Theme.uiFont(Font.BOLD, 13));
+            titleLabel.setForeground(theme.text);
+            titleLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
+            header.add(titleLabel, BorderLayout.CENTER);
+
+            IconButton close = new IconButton(theme, closeIcon(theme, 14));
+            close.setToolTipText("Закрыть");
+            close.addActionListener(e -> dispose());
+            header.add(close, BorderLayout.EAST);
+
+            MouseAdapter dragger = new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    dragOffset = e.getPoint();
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (dragOffset == null) {
+                        return;
+                    }
+                    java.awt.Point onScreen = e.getLocationOnScreen();
+                    setLocation(onScreen.x - dragOffset.x, onScreen.y - dragOffset.y);
+                }
+            };
+            header.addMouseListener(dragger);
+            header.addMouseMotionListener(dragger);
+            titleLabel.addMouseListener(dragger);
+            titleLabel.addMouseMotionListener(dragger);
+
+            body = new JPanel(new BorderLayout());
+            body.setOpaque(false);
+
+            rootPanel.add(header, BorderLayout.NORTH);
+            rootPanel.add(body, BorderLayout.CENTER);
+            super.setContentPane(rootPanel);
+
+            rootPanel.registerKeyboardAction(e -> dispose(),
+                    javax.swing.KeyStroke.getKeyStroke("ESCAPE"),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
+
+        public Theme theme() {
+            return theme;
+        }
+
+
+
+        /** Содержимое окна под шапкой. */
+        @Override
+        public void setContentPane(java.awt.Container content) {
+            if (body == null) {
+                super.setContentPane(content);
+                return;
+            }
+            body.removeAll();
+            body.add(content, java.awt.BorderLayout.CENTER);
+            body.revalidate();
+            body.repaint();
         }
     }
 

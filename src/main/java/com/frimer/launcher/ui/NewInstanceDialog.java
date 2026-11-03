@@ -27,7 +27,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 /** Диалог создания новой сборки. */
-public final class NewInstanceDialog extends JDialog {
+public final class NewInstanceDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -45,7 +45,7 @@ public final class NewInstanceDialog extends JDialog {
     private Instance result;
 
     public NewInstanceDialog(JFrame owner, Theme theme) {
-        super(owner, "Новая сборка", true);
+        super(owner, "Новая сборка", true, theme);
         this.theme = theme;
         nameField = new Ui.Field(theme, "Сборка");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

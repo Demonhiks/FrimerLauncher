@@ -32,6 +32,7 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 - Скины: библиотека, загрузка по нику с Mojang, превью «вид спереди» (Java2D), экспорт в `CustomSkinLoader`.
 - Моды: список с названиями и иконками из `fabric.mod.json` / `quilt.mod.json` / `mods.toml`, включение и удаление.
 - Свои JSON-парсер и сериализатор, скачивание с докачкой и проверкой SHA-1/SHA-512.
+- Иконка **«Что нового»** с точкой-бейджем и журналом изменений по версиям.
 
 | Клиент | Сервера | Моды | Скины |
 |---|---|---|---|
@@ -40,6 +41,10 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 | Браузер Modrinth | Миры | Скриншоты |
 |---|---|---|
 | ![](docs/screenshot-modrinth.png) | ![](docs/screenshot-worlds.png) | ![](docs/screenshot-screenshots.png) |
+
+Журнал изменений:
+
+![Что нового](docs/screenshot-changelog.png)
 
 Светлая тема:
 

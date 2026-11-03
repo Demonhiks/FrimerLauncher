@@ -2,6 +2,7 @@ import com.frimer.launcher.core.Instance;
 import com.frimer.launcher.core.InstanceStore;
 import com.frimer.launcher.core.ServerInstance;
 import java.nio.file.Path;
+import com.frimer.launcher.ui.ChangelogDialog;
 import com.frimer.launcher.ui.CrashingDialog;
 import com.frimer.launcher.ui.EditInstanceDialog;
 import com.frimer.launcher.ui.MainFrame;
@@ -157,6 +158,8 @@ public final class UiShots {
             SwingUtilities.invokeAndWait(() -> combo.setPopupVisible(false));
         }
         SwingUtilities.invokeAndWait(comboDialog::dispose);
+
+        capture(new ChangelogDialog(frame, theme), "17-changelog", 560, 550, 700);
 
         SwingUtilities.invokeAndWait(frame::dispose);
         System.out.println("Готово: " + outDir.getAbsolutePath());

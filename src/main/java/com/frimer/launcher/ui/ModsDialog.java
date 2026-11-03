@@ -27,7 +27,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 
 /** Список модов сборки: включить/отключить, удалить, открыть папку. */
-public final class ModsDialog extends JDialog {
+public final class ModsDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,7 +38,7 @@ public final class ModsDialog extends JDialog {
     private final JLabel counter = new JLabel();
 
     public ModsDialog(JFrame owner, Theme theme, Instance instance) {
-        super(owner, "Моды — " + instance.name, true);
+        super(owner, "Моды — " + instance.name, true, theme);
         this.theme = theme;
         this.instance = instance;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

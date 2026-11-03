@@ -92,6 +92,7 @@ public final class MainFrame extends JFrame {
     private JPanel contentPanel;
     private JPanel titleBlock;
     private JPanel actionRowPanel;
+    private Ui.IconButton changelogButton;
     private JLabel titleLabel;
     private JLabel subLabel;
     private JLabel statusLabel;
@@ -355,6 +356,12 @@ public final class MainFrame extends JFrame {
         footer.setOpaque(false);
         footer.setAlignmentX(Component.LEFT_ALIGNMENT);
         footer.add(Ui.chip("Frimer " + AppSettings.APP_VERSION, theme));
+        footer.add(Box.createHorizontalStrut(6));
+        changelogButton = new Ui.IconButton(theme, Ui.sparkleIcon(theme, 16));
+        changelogButton.setToolTipText("Что нового");
+        changelogButton.addActionListener(e -> openChangelog());
+        changelogButton.setBadge(hasUnseenChanges());
+        footer.add(changelogButton);
         sidebar.add(footer);
 
         // BoxLayout по вертикали растягивает детей до maximumSize - фиксируем высоты.
@@ -1501,23 +1508,28 @@ public final class MainFrame extends JFrame {
         }
     }
 
-    /** Показать «что нового» после обновления версии. */
-    public void afterShow() {
-        if (!AppSettings.APP_VERSION.equals(AppSettings.lastSeenVersion())) {
-            String notes = String.join("\n", List.of(
-                    "- Лаунчер переписан на Java (Swing) без внешних зависимостей",
-                    "- Поддержка Vanilla / Fabric / Quilt / Forge / NeoForge",
-                    "- Папка данных та же: ~/.mylauncher (настройки и сборки совместимы)",
-                    "- Сервера: Paper / Vanilla / Fabric / Forge / NeoForge + playit.gg",
-                    "- Импорт сборок Modrinth (.mrpack) перетаскиванием на окно"));
-            JOptionPane.showMessageDialog(this, notes,
-                    "Frimer " + AppSettings.APP_VERSION + " — что нового",
-                    JOptionPane.INFORMATION_MESSAGE);
-            AppSettings.setLastSeenVersion(AppSettings.APP_VERSION);
-            AppSettings.flush();
+    /** Есть ли непрочитанные изменения (версия новее просмотренной). */
+    private boolean hasUnseenChanges() {
+        return !AppSettings.APP_VERSION.equals(AppSettings.lastSeenVersion());
+    }
+
+    /** Открыть журнал изменений и отметить текущую версию просмотренной. */
+    private void openChangelog() {
+        ChangelogDialog dialog = new ChangelogDialog(this, theme);
+        dialog.showDialog();
+        AppSettings.setLastSeenVersion(AppSettings.APP_VERSION);
+        AppSettings.flush();
+        if (changelogButton != null) {
+            changelogButton.setBadge(false);
         }
     }
 
+    /** Показать «что нового», если версия ещё не просмотрена. */
+    public void afterShow() {
+        if (hasUnseenChanges()) {
+            openChangelog();
+        }
+    }
     private void onClose() {
         if (gameRunning) {
             int answer = JOptionPane.showConfirmDialog(this,

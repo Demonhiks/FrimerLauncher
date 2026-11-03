@@ -31,7 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 /** Миры сборки: размер, открытие папки, удаление и датапаки с Modrinth. */
-public final class WorldsDialog extends JDialog {
+public final class WorldsDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,7 +43,7 @@ public final class WorldsDialog extends JDialog {
     private final JLabel info = new JLabel(" ");
 
     public WorldsDialog(JFrame owner, Theme theme, Instance instance) {
-        super(owner, "Миры — " + instance.name, true);
+        super(owner, "Миры — " + instance.name, true, theme);
         this.theme = theme;
         this.instance = instance;
         this.worldsFolder = instance.folder.resolve("saves");

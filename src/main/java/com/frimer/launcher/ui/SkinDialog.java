@@ -32,7 +32,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /** Менеджер скинов: локальная библиотека, загрузка с Mojang, экспорт в сборки. */
-public final class SkinDialog extends JDialog {
+public final class SkinDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,7 +44,7 @@ public final class SkinDialog extends JDialog {
     private final JLabel info = new JLabel();
 
     public SkinDialog(JFrame owner, Theme theme, List<Instance> instances) {
-        super(owner, "Скины", true);
+        super(owner, "Скины", true, theme);
         this.theme = theme;
         this.instances = instances;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

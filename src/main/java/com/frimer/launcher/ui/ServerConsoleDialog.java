@@ -18,7 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 /** Консоль сервера: живой вывод, остановка и открытие папки. */
-public final class ServerConsoleDialog extends JDialog {
+public final class ServerConsoleDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -31,7 +31,7 @@ public final class ServerConsoleDialog extends JDialog {
 
     public ServerConsoleDialog(JFrame owner, Theme theme, ServerInstance server,
                                Runnable onStop, Runnable onKill) {
-        super(owner, "Консоль — " + server.name, false);
+        super(owner, "Консоль — " + server.name, false, theme);
         this.theme = theme;
         this.server = server;
         setDefaultCloseOperation(HIDE_ON_CLOSE);

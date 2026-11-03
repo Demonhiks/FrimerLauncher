@@ -29,7 +29,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 /** Диалог создания сервера: ядро, версия, порт, память. */
-public final class NewServerDialog extends JDialog {
+public final class NewServerDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,7 +47,7 @@ public final class NewServerDialog extends JDialog {
     private ServerInstance result;
 
     public NewServerDialog(JFrame owner, Theme theme) {
-        super(owner, "Новый сервер", true);
+        super(owner, "Новый сервер", true, theme);
         this.theme = theme;
         nameField = new Ui.Field(theme, "Мой сервер");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

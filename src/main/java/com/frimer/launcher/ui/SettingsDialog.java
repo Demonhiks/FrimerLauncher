@@ -22,7 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 /** Настройки лаунчера: ник, тема, память по умолчанию. */
-public final class SettingsDialog extends JDialog {
+public final class SettingsDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,7 +34,7 @@ public final class SettingsDialog extends JDialog {
     private boolean saved;
 
     public SettingsDialog(JFrame owner, Theme theme) {
-        super(owner, "Настройки", true);
+        super(owner, "Настройки", true, theme);
         this.theme = theme;
         nickField = new Ui.Field(theme, AppSettings.nickname());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

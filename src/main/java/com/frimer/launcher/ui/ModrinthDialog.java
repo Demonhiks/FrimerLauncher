@@ -34,7 +34,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 /** Браузер модов/шейдеров/ресурспаков/датапаков с Modrinth. */
-public final class ModrinthDialog extends JDialog {
+public final class ModrinthDialog extends Ui.FramelessDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -57,7 +57,7 @@ public final class ModrinthDialog extends JDialog {
     private volatile boolean busy;
 
     public ModrinthDialog(JFrame owner, Theme theme, Instance instance, String projectType, Path dest) {
-        super(owner, "Modrinth — " + Modrinth.labelFor(projectType), true);
+        super(owner, "Modrinth — " + Modrinth.labelFor(projectType), true, theme);
         this.theme = theme;
         searchField = new Ui.Field(theme, "");
         this.instance = instance;
@@ -302,13 +302,13 @@ public final class ModrinthDialog extends JDialog {
     }
 
     /** Выбор конкретной версии проекта. */
-    private static final class VersionDialog extends JDialog {
+    private static final class VersionDialog extends Ui.FramelessDialog {
         private static final long serialVersionUID = 1L;
 
         private Modrinth.Version picked;
 
         VersionDialog(JDialog owner, Theme theme, Modrinth.Hit hit, List<Modrinth.Version> versions) {
-            super(owner, "Версии — " + hit.title(), true);
+            super(owner, "Версии — " + hit.title(), true, theme);
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             JPanel root = new JPanel(new BorderLayout(0, 10));
             root.setBackground(theme.bg);
