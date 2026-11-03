@@ -1668,6 +1668,11 @@ public final class MainFrame extends JFrame {
 
     /** Показать «что нового», если версия ещё не просмотрена, и проверить обновления. */
     public void afterShow() {
+        String migrationWarning = Dirs.migrationWarning();
+        if (migrationWarning != null) {
+            appendLog("[данные] " + migrationWarning);
+            setStatus(Utils.shortText(migrationWarning, 110));
+        }
         if (hasUnseenChanges()) {
             openChangelog();
         }

@@ -32,7 +32,7 @@ jobs:
           name: FrimerLauncher
           path: target/FrimerLauncher.jar
 
-      - name: Extract changelog for this version
+      - name: Build release notes
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           VER="${GITHUB_REF_NAME#v}"
@@ -42,10 +42,17 @@ jobs:
           ver = sys.argv[1]
           src = open("src/main/java/com/frimer/launcher/core/Changelog.java",
                      encoding="utf-8").read()
-          # Ищем запись нужной версии: new Entry("<ver>", "<дата>", List.of( ... ))
+          # Запись о версии: new Entry("<ver>", "<дата>", List.of( ... ))
           m = re.search(r'new Entry\("' + re.escape(ver) + r'", "([^"]*)", List\.of\((.*?)\)\)',
                         src, re.S)
-          lines = []
+
+          lines = [
+              f"## Frimer Launcher {ver}",
+              "",
+              "Minecraft-лаунчер: Vanilla / Fabric / Quilt / Forge / NeoForge, сервера, скины,",
+              "моды и браузер Modrinth.",
+              "",
+          ]
           if m:
               date = m.group(1)
               changes = re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(2))
@@ -53,9 +60,29 @@ jobs:
               lines.append(f"### Что нового в {ver} ({date})")
               lines += [f"- {c}" for c in changes]
           else:
-              lines.append(f"### Frimer Launcher {ver}")
+              lines.append("### Что нового")
               lines.append("- (нет записи в журнале изменений)")
-          text = "\n".join(lines) + "\n\n"
+
+          # Всё в одном файле: body_path полностью заменяет body в action-gh-release.
+          lines += [
+              "",
+              "### Как запустить",
+              "1. Скачайте `FrimerLauncher.jar` ниже.",
+              "2. Нужна **Java 17 или новее** (проверить: `java -version`).",
+              "3. Запустите:",
+              "",
+              "```bat",
+              "java -jar FrimerLauncher.jar",
+              "```",
+              "",
+              "Данные лежат в `~/.frimerlauncher` (`C:\\Users\\<имя>\\.frimerlauncher`) — сборки,",
+              "сервера и настройки из Python-версии подхватываются сами.",
+              "",
+              "> Windows SmartScreen может предупредить о неизвестном издателе — это обычное",
+              "> поведение для jar без цифровой подписи, «Подробнее» → «Выполнить в любом случае».",
+          ]
+
+          text = "\n".join(lines) + "\n"
           with open("changes.md", "w", encoding="utf-8") as f:
               f.write(text)
           print(text)
@@ -67,24 +94,3 @@ jobs:
         with:
           files: target/FrimerLauncher.jar
           body_path: changes.md
-          append_body: true
-          body: |
-            ## Frimer Launcher
-
-            Minecraft-лаунчер: Vanilla / Fabric / Quilt / Forge / NeoForge, сервера, скины,
-            моды и браузер Modrinth.
-
-            ### Как запустить
-            1. Скачайте `FrimerLauncher.jar` ниже.
-            2. Нужна **Java 17 или новее** (проверить: `java -version`).
-            3. Запустите:
-
-            ```bat
-            java -jar FrimerLauncher.jar
-            ```
-
-            Данные лежат в `~/.frimerlauncher` (`C:\Users\<имя>\.frimerlauncher`) — сборки, сервера и
-            настройки из Python-версии подхватываются сами.
-
-            > Windows SmartScreen может предупредить о неизвестном издателе — это обычное
-            > поведение для jar без цифровой подписи, «Подробнее» → «Выполнить в любом случае».
