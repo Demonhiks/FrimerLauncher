@@ -29,68 +29,25 @@ jobs:
 
       - name: Build release notes
         if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
         run: |
-          VER="${GITHUB_REF_NAME#v}"
-          python - "$VER" <<'EOF'
-          import re, sys
-
-          ver = sys.argv[1]
-          src = open("src/main/java/com/frimer/launcher/core/Changelog.java",
-                     encoding="utf-8").read()
-          # Запись о версии: new Entry("<ver>", "<дата>", List.of( ... ))
-          m = re.search(r'new Entry\("' + re.escape(ver) + r'", "([^"]*)", List\.of\((.*?)\)\)',
-                        src, re.S)
-
-          lines = [
-              f"## Frimer Launcher {ver}",
-              "",
-              "Minecraft-лаунчер: Vanilla / Fabric / Quilt / Forge / NeoForge, сервера, скины,",
-              "моды и браузер Modrinth.",
-              "",
-          ]
-          if m:
-              date = m.group(1)
-              changes = re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(2))
-              changes = [c.replace('\\\\', '\\') for c in changes]
-              lines.append(f"### Что нового в {ver} ({date})")
-              lines += [f"- {c}" for c in changes]
-          else:
-              lines.append("### Что нового")
-              lines.append("- (нет записи в журнале изменений)")
-
-          # Всё в одном файле: body_path полностью заменяет body в action-gh-release.
-          lines += [
-              "",
-              "### Как запустить",
-              "1. Скачайте `FrimerLauncher-win64.zip` ниже.",
-              "2. Распакуйте в любую папку.",
-              "3. Запустите `Frimer Launcher.exe` — Java ставить не нужно, она уже внутри.",
-              "",
-              "Обычный jar тоже лежит в релизе: `java -jar FrimerLauncher.jar` (нужна Java 17+).",
-              "",
-              "Данные лежат в `~/.frimerlauncher` (`C:\\Users\\<имя>\\.frimerlauncher`) — сборки,",
-              "сервера и настройки из Python-версии подхватываются сами.",
-              "",
-              "> Windows SmartScreen может предупредить о неизвестном издателе — это обычное",
-              "> поведение для неподписанной сборки, «Подробнее» → «Выполнить в любом случае».",
-          ]
-
-          text = "\n".join(lines) + "\n"
-          with open("changes.md", "w", encoding="utf-8") as f:
-              f.write(text)
-          print(text)
-          EOF
+          $ver = "$env:GITHUB_REF_NAME" -replace '^v', ''
+          if (-not $ver) { $ver = '0.0.0' }
+          Write-Host "release notes for $ver"
+          New-Item -ItemType Directory -Force -Path build\notes | Out-Null
+          javac -encoding UTF-8 -cp target\classes -d build\notes tools\ReleaseNotes.java
+          if ($LASTEXITCODE -ne 0) { throw "ReleaseNotes не собрался" }
+          java -cp "target\classes;build\notes" ReleaseNotes $ver
+          if ($LASTEXITCODE -ne 0) { throw "ReleaseNotes не отработал" }
 
       - name: Build portable app image
-        shell: pwsh
         run: |
           $ver = "$env:GITHUB_REF_NAME" -replace '^v', ''
           if ($ver -notmatch '^\d+(\.\d+){0,2}$') { $ver = '1.0.0' }
           Write-Host "app-version: $ver"
           New-Item -ItemType Directory -Force -Path staging | Out-Null
           Copy-Item target\FrimerLauncher.jar staging\
-          jpackage --type app-image --name "Frimer Launcher" --app-version $ver --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging\frimer.ico --dest dist --win-console false --vendor Frimer
+          jpackage --type app-image --name "Frimer Launcher" --app-version $ver --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging\frimer.ico --dest dist --vendor Frimer
+          if ($LASTEXITCODE -ne 0) { throw "jpackage не собрал приложение" }
           Compress-Archive -Path "dist\Frimer Launcher\*" -DestinationPath "FrimerLauncher-win64.zip" -Force
           Write-Host ("exe: " + (Get-Item "dist\Frimer Launcher\Frimer Launcher.exe").Length + " bytes")
           Write-Host ("zip: " + (Get-Item "FrimerLauncher-win64.zip").Length + " bytes")
