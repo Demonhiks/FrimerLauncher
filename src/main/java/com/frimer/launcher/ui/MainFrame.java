@@ -1272,9 +1272,6 @@ public final class MainFrame extends JFrame {
                                 startSrvButton.setText("Запустить сервер");
                                 setStatus("Сервер запущен");
                                 copyAddrButton.setEnabled(true);
-                                if (srv.useUpnp) {
-                                    tryShareServer(srv);
-                                }
                             });
                         }
 
@@ -1337,29 +1334,6 @@ public final class MainFrame extends JFrame {
     }
 
     /** Достать TPS и число игроков из строк лога сервера. */
-    /** Открыть порт через UPnP, чтобы друзья зашли по внешнему IP без playit. */
-    private void tryShareServer(ServerInstance srv) {
-        new Thread(() -> {
-            try {
-                com.frimer.launcher.core.Upnp.Mapping mapping =
-                        com.frimer.launcher.core.Upnp.open(srv.port, "Frimer: " + srv.name, 0);
-                SwingUtilities.invokeLater(() -> {
-                    srv.publicAddress = mapping.address();
-                    srv.save();
-                    appendLog("[upnp] порт открыт: " + mapping.address());
-                    copyAddrButton.setText("Копировать: " + mapping.address());
-                    copyAddrButton.setEnabled(true);
-                    if (serverConsole != null) {
-                        serverConsole.setMetrics("адрес " + mapping.address(), -1);
-                    }
-                });
-            } catch (Exception e) {
-                SwingUtilities.invokeLater(() -> appendLog("[upnp] не вышло ("
-                        + Utils.shortText(e.getMessage(), 80) + ") — оставляю playit.gg"));
-            }
-        }, "frimer-upnp").start();
-    }
-
     private void trackServerMetrics(ServerInstance srv, String line) {
         if (line == null) {
             return;
@@ -1462,10 +1436,7 @@ public final class MainFrame extends JFrame {
 
     private void copyServerAddress() {
         String address;
-        if (currentServer != null && currentServer.publicAddress != null
-                && !currentServer.publicAddress.isBlank()) {
-            address = currentServer.publicAddress;
-        } else if (!playitAddress.isEmpty()) {
+        if (!playitAddress.isEmpty()) {
             address = playitAddress;
         } else {
             address = "localhost:" + (currentServer == null ? 25565 : currentServer.port);

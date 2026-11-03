@@ -25,8 +25,6 @@ public final class ServerInstance {
     public int restartDelay;
     public int rconPort;
     public String rconPassword;
-    public boolean useUpnp;
-    public String publicAddress;
 
     public ServerInstance(Path folder, String name, String mcVersion, String core, int ramMb,
                           int port, String playitAddress, boolean autoPlayit, boolean eula,
@@ -53,8 +51,6 @@ public final class ServerInstance {
         this.restartDelay = Math.max(5, restartDelay);
         this.rconPort = rconPort <= 0 ? port + 10 : rconPort;
         this.rconPassword = rconPassword == null ? "" : rconPassword;
-        this.useUpnp = true;
-        this.publicAddress = "";
     }
 
     public String coreLabel() {
@@ -103,8 +99,6 @@ public final class ServerInstance {
         data.put("restart_delay", restartDelay);
         data.put("rcon_port", rconPort);
         data.put("rcon_password", rconPassword);
-        data.put("use_upnp", useUpnp);
-        data.put("public_address", publicAddress == null ? "" : publicAddress);
         Json.writeFileQuiet(folder.resolve("server.json"), data);
     }
 
@@ -131,8 +125,6 @@ public final class ServerInstance {
                 Json.integer(d.get("restart_delay"), 15),
                 Json.integer(d.get("rcon_port"), 0),
                 Json.str(d.get("rcon_password"), ""));
-        srv.useUpnp = Json.bool(d.get("use_upnp"), true);
-        srv.publicAddress = Json.str(d.get("public_address"), "");
         return srv;
     }
 

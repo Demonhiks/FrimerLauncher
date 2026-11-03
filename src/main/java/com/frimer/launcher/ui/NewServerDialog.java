@@ -43,7 +43,6 @@ public final class NewServerDialog extends Ui.FramelessDialog {
     private final JLabel ramLabel = new JLabel();
     private final JLabel hintLabel = new JLabel(" ");
     private final JLabel coreHint = new JLabel(" ");
-    private final javax.swing.JCheckBox upnpBox;
 
     private ServerInstance result;
 
@@ -93,14 +92,6 @@ public final class NewServerDialog extends Ui.FramelessDialog {
         portEditor.getTextField().setBorder(new EmptyBorder(4, 8, 4, 8));
         portSpinner.setEditor(portEditor);
         root.add(portSpinner);
-        upnpBox = new javax.swing.JCheckBox("Открывать порт для друзей автоматически (UPnP)");
-        upnpBox.setOpaque(false);
-        upnpBox.setForeground(theme.text);
-        upnpBox.setFont(Theme.uiFont(Font.PLAIN, 12));
-        upnpBox.setSelected(true);
-        upnpBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        root.add(Box.createVerticalStrut(4));
-        root.add(upnpBox);
         root.add(Box.createVerticalStrut(12));
 
         root.add(fieldLabel("Оперативная память"));
@@ -224,8 +215,6 @@ public final class NewServerDialog extends Ui.FramelessDialog {
         int port = (Integer) portSpinner.getValue();
         try {
             result = ServerStore.create(name, mcValue.toString(), core, ramSlider.getValue(), port);
-            result.useUpnp = upnpBox.isSelected();
-            result.save();
             dispose();
         } catch (RuntimeException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Не удалось создать сервер",

@@ -78,27 +78,6 @@ public final class ServerConsoleDialog extends Ui.FramelessDialog {
             new ModrinthDialog((JFrame) getOwner(), theme, server.mcVersion, "",
                     com.frimer.launcher.core.Modrinth.PLUGIN, dest).showDialog();
         });
-        JButton shareButton = Ui.button("Открыть порт (UPnP)", theme);
-        shareButton.addActionListener(e -> {
-            appendLog("Пробую открыть порт через UPnP...");
-            new Thread(() -> {
-                try {
-                    com.frimer.launcher.core.Upnp.Mapping mapping =
-                            com.frimer.launcher.core.Upnp.open(server.port,
-                                    "Frimer: " + server.name, 3600);
-                    SwingUtilities.invokeLater(() -> {
-                        server.publicAddress = mapping.address();
-                        server.save();
-                        appendLog("Порт открыт: " + mapping.address()
-                                + " (роутер: " + mapping.router() + ")");
-                        metrics.setText("адрес: " + mapping.address());
-                    });
-                } catch (Exception ex) {
-                    SwingUtilities.invokeLater(() -> appendLog("UPnP не сработал: "
-                            + ex.getMessage() + ". Используйте playit.gg — «Адрес для друзей»."));
-                }
-            }, "frimer-upnp-console").start();
-        });
         JButton clearButton = Ui.miniButton("Очистить", theme);
         clearButton.addActionListener(e -> output.setText(""));
 
@@ -145,8 +124,6 @@ public final class ServerConsoleDialog extends Ui.FramelessDialog {
         buttons.add(folderButton);
         buttons.add(Box.createHorizontalStrut(8));
         buttons.add(pluginsButton);
-        buttons.add(Box.createHorizontalStrut(8));
-        buttons.add(shareButton);
         buttons.add(Box.createHorizontalGlue());
 
         JPanel bottom = new JPanel();
