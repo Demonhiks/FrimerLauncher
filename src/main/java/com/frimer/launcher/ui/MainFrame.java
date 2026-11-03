@@ -99,6 +99,7 @@ public final class MainFrame extends JFrame {
     private final java.util.Map<Path, String> serverTps = new java.util.HashMap<>();
     private final java.util.Map<Path, Integer> serverOnline = new java.util.HashMap<>();
     private final java.util.Map<Path, Integer> restartAttempts = new java.util.HashMap<>();
+    private boolean playitClaimOpened;
     private JLabel titleLabel;
     private JLabel subLabel;
     private JLabel statusLabel;
@@ -1271,6 +1272,9 @@ public final class MainFrame extends JFrame {
                                 startSrvButton.setText("Запустить сервер");
                                 setStatus("Сервер запущен");
                                 copyAddrButton.setEnabled(true);
+                                if (srv.useUpnp) {
+                                    tryShareServer(srv);
+                                }
                             });
                         }
 
@@ -1333,6 +1337,29 @@ public final class MainFrame extends JFrame {
     }
 
     /** Достать TPS и число игроков из строк лога сервера. */
+    /** Открыть порт через UPnP, чтобы друзья зашли по внешнему IP без playit. */
+    private void tryShareServer(ServerInstance srv) {
+        new Thread(() -> {
+            try {
+                com.frimer.launcher.core.Upnp.Mapping mapping =
+                        com.frimer.launcher.core.Upnp.open(srv.port, "Frimer: " + srv.name, 0);
+                SwingUtilities.invokeLater(() -> {
+                    srv.publicAddress = mapping.address();
+                    srv.save();
+                    appendLog("[upnp] порт открыт: " + mapping.address());
+                    copyAddrButton.setText("Копировать: " + mapping.address());
+                    copyAddrButton.setEnabled(true);
+                    if (serverConsole != null) {
+                        serverConsole.setMetrics("адрес " + mapping.address(), -1);
+                    }
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> appendLog("[upnp] не вышло ("
+                        + Utils.shortText(e.getMessage(), 80) + ") — оставляю playit.gg"));
+            }
+        }, "frimer-upnp").start();
+    }
+
     private void trackServerMetrics(ServerInstance srv, String line) {
         if (line == null) {
             return;
@@ -1359,6 +1386,20 @@ public final class MainFrame extends JFrame {
     }
 
     private void detectPlayitAddress(String line) {
+        java.util.regex.Matcher claim = java.util.regex.Pattern
+                .compile("https://(?:www\\.)?playit\\.gg/[^\\s\"']+")
+                .matcher(line == null ? "" : line);
+        if (claim.find() && !playitClaimOpened) {
+            playitClaimOpened = true;
+            String url = claim.group();
+            SwingUtilities.invokeLater(() -> {
+                appendLog("[playit] подтвердите туннель: " + url);
+                com.frimer.launcher.core.Modrinth.openPage(url);
+                JOptionPane.showMessageDialog(this,
+                        "Открыл браузер — подтвердите туннель и вернитесь в лаунчер.\n\n" + url,
+                        "playit.gg", JOptionPane.INFORMATION_MESSAGE);
+            });
+        }
         var m = java.util.regex.Pattern.compile("([a-z0-9-]+\\.(?:playit\\.gg|at\\.ply\\.gg|joinmc\\.link))")
                 .matcher(line == null ? "" : line.toLowerCase());
         if (m.find()) {
@@ -1420,9 +1461,15 @@ public final class MainFrame extends JFrame {
     }
 
     private void copyServerAddress() {
-        String address = playitAddress.isEmpty()
-                ? "localhost:" + (currentServer == null ? 25565 : currentServer.port)
-                : playitAddress;
+        String address;
+        if (currentServer != null && currentServer.publicAddress != null
+                && !currentServer.publicAddress.isBlank()) {
+            address = currentServer.publicAddress;
+        } else if (!playitAddress.isEmpty()) {
+            address = playitAddress;
+        } else {
+            address = "localhost:" + (currentServer == null ? 25565 : currentServer.port);
+        }
         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new java.awt.datatransfer.StringSelection(address), null);
         setStatus("Адрес скопирован: " + address);
