@@ -10,9 +10,22 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    # jpackage для Windows-сборки — только на windows-раннере
-    runs-on: windows-latest
+  package:
+    name: package (${{ matrix.os }})
+    # Одна упавшая платформа не должна блокировать остальные
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: FrimerLauncher-win64.zip
+          - os: ubuntu-latest
+            asset: FrimerLauncher-linux-x64.tar.gz
+          - os: macos-14
+            asset: FrimerLauncher-macos-arm64.zip
+          - os: macos-15-intel
+            asset: FrimerLauncher-macos-x64.zip
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,19 +40,9 @@ jobs:
       - name: Build jar
         run: mvn -B -q package
 
-      - name: Build release notes
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          $ver = "$env:GITHUB_REF_NAME" -replace '^v', ''
-          if (-not $ver) { $ver = '0.0.0' }
-          Write-Host "release notes for $ver"
-          New-Item -ItemType Directory -Force -Path build\notes | Out-Null
-          javac -encoding UTF-8 -cp target\classes -d build\notes tools\ReleaseNotes.java
-          if ($LASTEXITCODE -ne 0) { throw "ReleaseNotes не собрался" }
-          java -cp "target\classes;build\notes" ReleaseNotes $ver
-          if ($LASTEXITCODE -ne 0) { throw "ReleaseNotes не отработал" }
-
-      - name: Build portable app image
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           $ver = "$env:GITHUB_REF_NAME" -replace '^v', ''
           if ($ver -notmatch '^\d+(\.\d+){0,2}$') { $ver = '1.0.0' }
@@ -48,27 +51,81 @@ jobs:
           Copy-Item target\FrimerLauncher.jar staging\
           jpackage --type app-image --name "Frimer Launcher" --app-version $ver --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging\frimer.ico --dest dist --vendor Frimer
           if ($LASTEXITCODE -ne 0) { throw "jpackage не собрал приложение" }
-          Compress-Archive -Path "dist\Frimer Launcher\*" -DestinationPath "FrimerLauncher-win64.zip" -Force
-          Write-Host ("exe: " + (Get-Item "dist\Frimer Launcher\Frimer Launcher.exe").Length + " bytes")
-          Write-Host ("zip: " + (Get-Item "FrimerLauncher-win64.zip").Length + " bytes")
+          Compress-Archive -Path "dist\Frimer Launcher\*" -DestinationPath "${{ matrix.asset }}" -Force
+          Write-Host ("asset: " + (Get-Item "${{ matrix.asset }}").Length + " bytes")
 
-      - name: Upload jar artifact
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          [[ "$VER" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || VER=1.0.0
+          echo "app-version: $VER"
+          mkdir -p staging && cp target/FrimerLauncher.jar staging/
+          jpackage --type app-image --name "Frimer Launcher" --app-version "$VER" --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging/frimer.png --dest dist --vendor Frimer
+          tar -czf "${{ matrix.asset }}" -C dist "Frimer Launcher"
+          ls -lh "${{ matrix.asset }}"
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          [[ "$VER" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || VER=1.0.0
+          echo "app-version: $VER"
+          mkdir -p staging && cp target/FrimerLauncher.jar staging/
+          jpackage --type app-image --name "Frimer Launcher" --app-version "$VER" --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging/frimer.icns --dest dist --vendor Frimer
+          # ditto сохраняет симлинки и биты запуска внутри .app
+          ditto -c -k --sequesterRsrc --keepParent "dist/Frimer Launcher.app" "${{ matrix.asset }}"
+          ls -lh "${{ matrix.asset }}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+      - name: Upload jar
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: FrimerLauncher-jar
           path: target/FrimerLauncher.jar
 
-      - name: Upload portable artifact
-        uses: actions/upload-artifact@v4
+  publish:
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          name: FrimerLauncher-win64
-          path: FrimerLauncher-win64.zip
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build release notes
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          mvn -B -q package
+          mkdir -p build/notes
+          javac -encoding UTF-8 -cp target/classes -d build/notes tools/ReleaseNotes.java
+          java -cp "target/classes:build/notes" ReleaseNotes "$VER"
+
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/FrimerLauncher.jar
+            FrimerLauncher.jar
             FrimerLauncher-win64.zip
+            FrimerLauncher-linux-x64.tar.gz
+            FrimerLauncher-macos-arm64.zip
+            FrimerLauncher-macos-x64.zip
           body_path: changes.md

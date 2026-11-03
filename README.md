@@ -5,21 +5,44 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 сам скачивает нужную версию Java и умеет импортировать сборки Modrinth.
 
 [![Скачать](https://img.shields.io/github/v/release/Demonhiks/FrimerLaunchers?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&color=f2a93b)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-1a1f27?color=1a1f27)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
+[![Windows · Linux · macOS](https://img.shields.io/badge/Windows%20·%20Linux%20·%20macOS-x64%20%2F%20arm64-1a1f27?color=1a1f27)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
 
 ![Главное окно](docs/screenshot-main.png)
 
 ## Скачать
 
-Готовая сборка для Windows собирается автоматически и лежит в разделе
-**[Releases](../../releases)**.
+Готовые сборки собираются автоматически и лежат в разделе
+**[Releases](../../releases)**. Java ставить не нужно — она уже внутри.
+Установка тоже не нужна: распаковал и запустил, папку можно переносить куда угодно.
 
-1. Скачайте **`FrimerLauncher-win64.zip`**.
-2. Распакуйте в любую папку (например, `C:\Frimer`).
-3. Запустите **`Frimer Launcher.exe`**.
+| Система | Файл | Что внутри |
+|---|---|---|
+| Windows x64 | `FrimerLauncher-win64.zip` | `Frimer Launcher.exe` |
+| Linux x64 | `FrimerLauncher-linux-x64.tar.gz` | `Frimer Launcher/bin/Frimer Launcher` |
+| macOS Apple Silicon | `FrimerLauncher-macos-arm64.zip` | `Frimer Launcher.app` |
+| macOS Intel | `FrimerLauncher-macos-x64.zip` | `Frimer Launcher.app` |
 
-Java ставить не нужно — она уже внутри архива. Установка тоже не нужна:
-папку можно переносить куда угодно.
+Windows:
+
+```bat
+:: распакуйте архив и запустите
+Frimer Launcher.exe
+```
+
+Linux:
+
+```bash
+tar -xzf FrimerLauncher-linux-x64.tar.gz
+./"Frimer Launcher/bin/Frimer Launcher"
+```
+
+macOS (первый запуск — правый клик по `Frimer Launcher.app` → «Открыть»,
+сборка без подписи):
+
+```bash
+unzip FrimerLauncher-macos-arm64.zip   # или -x64.zip для Intel
+open "Frimer Launcher.app"
+```
 
 Постоянная ссылка на последнюю версию:
 
@@ -27,8 +50,7 @@ Java ставить не нужно — она уже внутри архива.
 https://github.com/Demonhiks/FrimerLaunchers/releases/latest/download/FrimerLauncher-win64.zip
 ```
 
-В релизе рядом лежит и обычный `FrimerLauncher.jar` — для Linux/macOS или если
-Java 17+ уже стоит:
+В релизе рядом лежит и обычный `FrimerLauncher.jar` — если Java 17+ уже стоит:
 
 ```bat
 java -jar FrimerLauncher.jar
@@ -143,6 +165,8 @@ jpackage --type app-image --name "Frimer Launcher" --app-version 2.3.3 ^
 ```
 
 Результат — папка `dist\Frimer Launcher` с `Frimer Launcher.exe`; её и раздаёт CI в архиве.
+На Linux тот же вызов даёт `dist/Frimer Launcher/bin/Frimer Launcher` (иконка `packaging/frimer.png`),
+на macOS — `dist/Frimer Launcher.app` (иконка `packaging/frimer.icns`).
 
 ## Где лежат данные
 

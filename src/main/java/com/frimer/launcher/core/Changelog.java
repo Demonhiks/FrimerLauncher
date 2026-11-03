@@ -15,6 +15,10 @@ public final class Changelog {
     /** Свежие версии сверху. */
     public static List<Entry> entries() {
         return List.of(
+                new Entry("2.3.4", "03.11.2026", List.of(
+                        "Сборки для Linux (.tar.gz) и macOS (.zip): приложение со встроенной Java, как на Windows",
+                        "macOS — отдельно для Apple Silicon (arm64) и Intel (x64)",
+                        "Значок приложения для всех трёх систем: .ico, .png и .icns")),
                 new Entry("2.3.3", "03.11.2026", List.of(
                         "Сборка для Windows больше не требует Java: Frimer Launcher.exe со встроенной Java",
                         "Портативный архив: распаковал и запустил, установка не нужна",

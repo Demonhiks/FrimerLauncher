@@ -38,14 +38,18 @@ public final class ReleaseNotes {
 
         out.append('\n');
         out.append("### Как запустить\n");
-        out.append("1. Скачайте `FrimerLauncher-win64.zip` ниже.\n");
-        out.append("2. Распакуйте в любую папку.\n");
-        out.append("3. Запустите `Frimer Launcher.exe` — Java ставить не нужно, она уже внутри.\n\n");
+        out.append("Java ставить не нужно — она уже внутри сборки.\n\n");
+        out.append("**Windows** — распакуйте `FrimerLauncher-win64.zip` и запустите `Frimer Launcher.exe`.\n\n");
+        out.append("**Linux** — распакуйте `FrimerLauncher-linux-x64.tar.gz` и запустите\n");
+        out.append("`Frimer Launcher/bin/Frimer Launcher`.\n\n");
+        out.append("**macOS** — распакуйте `FrimerLauncher-macos-arm64.zip` (Apple Silicon) или\n");
+        out.append("`FrimerLauncher-macos-x64.zip` (Intel) и запустите `Frimer Launcher.app`.\n");
+        out.append("Первый запуск — правый клик по значку → «Открыть»: сборка без подписи.\n\n");
         out.append("Обычный jar тоже лежит в релизе: `java -jar FrimerLauncher.jar` (нужна Java 17+).\n\n");
         out.append("Данные лежат в `~/.frimerlauncher` (`C:\\Users\\<имя>\\.frimerlauncher`) — сборки,\n");
         out.append("сервера и настройки из Python-версии подхватываются сами.\n\n");
-        out.append("> Windows SmartScreen может предупредить о неизвестном издателе — это обычное\n");
-        out.append("> поведение для неподписанной сборки, «Подробнее» → «Выполнить в любом случае».\n");
+        out.append("> Windows SmartScreen и macOS Gatekeeper предупреждают о неподписанной сборке —\n");
+        out.append("> это обычное поведение: «Подробнее» → «Выполнить в любом случае».\n");
 
         Files.writeString(Path.of("changes.md"), out, StandardCharsets.UTF_8);
         System.out.print(out);
