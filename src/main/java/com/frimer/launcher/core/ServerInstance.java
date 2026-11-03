@@ -19,6 +19,8 @@ public final class ServerInstance {
     public int port;
     public String playitAddress;
     public boolean autoPlayit;
+    /** Постоянный адрес playit.gg (claim-код агента): не меняется между перезапусками. */
+    public String playitPermanent;
     public boolean eula;
     public String loaderVersion;
     public boolean autoRestart;
@@ -45,6 +47,7 @@ public final class ServerInstance {
         this.port = port;
         this.playitAddress = playitAddress == null ? "" : playitAddress;
         this.autoPlayit = autoPlayit;
+        this.playitPermanent = "";
         this.eula = eula;
         this.loaderVersion = loaderVersion == null ? "" : loaderVersion;
         this.autoRestart = autoRestart;
@@ -93,6 +96,9 @@ public final class ServerInstance {
         data.put("port", port);
         data.put("playit_address", playitAddress);
         data.put("auto_playit", autoPlayit);
+        if (playitPermanent != null && !playitPermanent.isEmpty()) {
+            data.put("playit_permanent", playitPermanent);
+        }
         data.put("eula", eula);
         data.put("loader_version", loaderVersion);
         data.put("auto_restart", autoRestart);
@@ -125,6 +131,7 @@ public final class ServerInstance {
                 Json.integer(d.get("restart_delay"), 15),
                 Json.integer(d.get("rcon_port"), 0),
                 Json.str(d.get("rcon_password"), ""));
+        srv.playitPermanent = Json.str(d.get("playit_permanent"), "");
         return srv;
     }
 

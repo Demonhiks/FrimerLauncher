@@ -12,9 +12,18 @@ public final class Changelog {
     public record Entry(String version, String date, List<String> changes) {
     }
 
+    /** Все изменения текущей версии одной строкой — для описаний GitHub Releases. */
+    public static String latestSummary() {
+        return String.join("\n", latest().changes());
+    }
+
     /** Свежие версии сверху. */
     public static List<Entry> entries() {
         return List.of(
+                new Entry("2.4.0", "03.11.2026", List.of(
+                        "playit.gg: постоянный адрес для друзей — после подтверждения (claim) адрес запоминается и не меняется между перезапусками сервера",
+                        "Лаунчер сам создаёт туннель minecraft через local API агента playit (если агент запущен)",
+                        "Кнопка «Копировать» сразу показывает сохранённый адрес, а не ждёт запуска туннеля")),
                 new Entry("2.3.1", "03.11.2026", List.of(
                         "Папка данных переименована: ~/.mylauncher → ~/.frimerlauncher (C:\\Users\\<имя>\\.frimerlauncher)",
                         "Старые данные подхватываются сами — при первом запуске папка переименовывается автоматически",

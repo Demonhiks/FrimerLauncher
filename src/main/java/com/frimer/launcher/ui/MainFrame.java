@@ -6,6 +6,7 @@ import com.frimer.launcher.core.GameLauncher;
 import com.frimer.launcher.core.Instance;
 import com.frimer.launcher.core.InstanceStore;
 import com.frimer.launcher.core.ModpackImporter;
+import com.frimer.launcher.core.Playit;
 import com.frimer.launcher.core.ServerInstance;
 import com.frimer.launcher.core.ServerInstallers;
 import com.frimer.launcher.core.ServerRunner;
@@ -1246,6 +1247,11 @@ public final class MainFrame extends JFrame {
                         line -> appendLog(line), (done, total) -> {
                         });
                 SwingUtilities.invokeLater(() -> {
+                    playitAddress = srv.playitPermanent.isEmpty()
+                            ? srv.playitAddress : srv.playitPermanent;
+                    playitClaimOpened = false;
+                    copyAddrButton.setText(playitAddress.isEmpty()
+                            ? "Адрес для друзей" : "Копировать: " + playitAddress);
                     serverRunner = new ServerRunner(srv, java, true, new ServerRunner.Listener() {
                         @Override
                         public void onStatus(String status) {
@@ -1377,14 +1383,30 @@ public final class MainFrame extends JFrame {
         var m = java.util.regex.Pattern.compile("([a-z0-9-]+\\.(?:playit\\.gg|at\\.ply\\.gg|joinmc\\.link))")
                 .matcher(line == null ? "" : line.toLowerCase());
         if (m.find()) {
-            playitAddress = m.group(1);
+            String addr = m.group(1);
+            playitAddress = addr;
             SwingUtilities.invokeLater(() -> {
                 copyAddrButton.setText("Копировать: " + playitAddress);
-                if (currentServer != null) {
-                    currentServer.playitAddress = playitAddress;
-                    currentServer.save();
-                }
+                applyPlayitAddress(addr);
             });
+        }
+    }
+
+    /** Сохраняет адрес в сервер: как временный и, если агент заявлен, как постоянный. */
+    private void applyPlayitAddress(String addr) {
+        ServerInstance srv = currentServer;
+        if (srv == null || addr == null || addr.isEmpty()) {
+            return;
+        }
+        boolean changed = !addr.equals(srv.playitAddress);
+        srv.playitAddress = addr;
+        if (srv.playitPermanent.isEmpty() && !Playit.claimCode().isEmpty()) {
+            srv.playitPermanent = addr;
+            appendLog("[playit] Постоянный адрес для друзей: " + addr);
+            changed = true;
+        }
+        if (changed) {
+            srv.save();
         }
     }
 

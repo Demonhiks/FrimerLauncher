@@ -149,6 +149,21 @@ public final class ServerRunner {
             }, "frimer-playit");
             pump.setDaemon(true);
             pump.start();
+            Thread api = new Thread(() -> {
+                for (int i = 0; i < 12 && pp.isAlive(); i++) {
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    if (Playit.ensureTunnel(server.port, listener::onLog)) {
+                        return;
+                    }
+                }
+            }, "frimer-playit-api");
+            api.setDaemon(true);
+            api.start();
         } catch (IOException e) {
             listener.onLog("[playit] Не удалось запустить: " + e.getMessage());
         }
