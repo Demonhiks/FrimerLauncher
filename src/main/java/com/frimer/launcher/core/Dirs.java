@@ -10,7 +10,10 @@ public final class Dirs {
     }
 
     public static final Path HOME = Path.of(System.getProperty("user.home", "."));
-    public static final Path GAME_DIR = HOME.resolve(".mylauncher");
+    public static final Path GAME_DIR = HOME.resolve(".frimerlauncher");
+
+    /** Старое имя папки данных (до v2.3.1) — для автоматического переноса. */
+    private static final String LEGACY_DIR_NAME = ".mylauncher";
 
     public static final Path INSTANCES_DIR = GAME_DIR.resolve("instances");
     public static final Path LOGS_DIR = GAME_DIR.resolve("logs");
@@ -39,7 +42,21 @@ public final class Dirs {
         return osName().equals("windows");
     }
 
+    /** Перенос данных со старого имени папки: ~/.mylauncher → ~/.frimerlauncher. */
+    private static void migrateLegacyDir() {
+        try {
+            Path legacy = HOME.resolve(LEGACY_DIR_NAME);
+            if (java.nio.file.Files.isDirectory(legacy)
+                    && !java.nio.file.Files.exists(GAME_DIR)) {
+                java.nio.file.Files.move(legacy, GAME_DIR);
+            }
+        } catch (java.io.IOException ignored) {
+            // не удалось переименовать — создадим новую папку обычным путём
+        }
+    }
+
     public static void ensureAll() {
+        migrateLegacyDir();
         for (Path p : new Path[]{
                 GAME_DIR, INSTANCES_DIR, LOGS_DIR, RUNTIME_DIR,
                 VERSIONS_DIR, LIBRARIES_DIR, ASSETS_DIR, SERVERS_DIR, SKINS_DIR, CACHE_DIR}) {

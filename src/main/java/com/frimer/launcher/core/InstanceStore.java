@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Загрузка/создание инстансов в ~/.mylauncher/instances. */
+/** Загрузка/создание инстансов в ~/.frimerlauncher/instances. */
 public final class InstanceStore {
 
     private InstanceStore() {

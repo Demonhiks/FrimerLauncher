@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Свои темы: встроенные dark/light плюс JSON-файлы из ~/.mylauncher/themes. */
+/** Свои темы: встроенные dark/light плюс JSON-файлы из ~/.frimerlauncher/themes. */
 public final class Themes {
 
     private Themes() {

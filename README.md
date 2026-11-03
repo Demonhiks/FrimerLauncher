@@ -70,7 +70,7 @@ java -jar FrimerLauncher.jar
 - Моды: список с названиями и иконками из `fabric.mod.json` / `quilt.mod.json` / `mods.toml`, включение и удаление.
 - Свои JSON-парсер и сериализатор, скачивание с докачкой и проверкой SHA-1/SHA-512.
 - Иконка **«Что нового»** с точкой-бейджем и журналом изменений по версиям.
-- **Свои темы**: JSON с цветами в `~/.mylauncher/themes` + кнопка «Экспорт темы».
+- **Свои темы**: JSON с цветами в `~/.frimerlauncher/themes` + кнопка «Экспорт темы».
 - **3D-превью скина** с вращением мышью.
 - **Автообновление** через GitHub Releases: проверка при старте, скачивание и перезапуск.
 
@@ -129,10 +129,10 @@ java -jar target/FrimerLauncher.jar
 
 ## Где лежат данные
 
-Папка та же, что у Python-версии, — существующие сборки, сервера и настройки подхватываются сразу:
+Данные лежат в `~/.frimerlauncher` (`C:\Users\<имя>\.frimerlauncher`) — сборки, сервера и настройки из Python-версии подхватываются сами. Старая папка `~/.mylauncher` при первом запуске новой версии переименовывается автоматически:
 
 ```
-~/.mylauncher/            (C:\Users\<имя>\.mylauncher)
+~/.frimerlauncher/            (C:\Users\<имя>\.frimerlauncher)
 ├── instances/            сборки клиента (instance.json, mods/, resourcepacks/, saves/)
 ├── servers/              сервера (server.json, world/, mods/, plugins/)
 ├── versions/             версии и профили загрузчиков

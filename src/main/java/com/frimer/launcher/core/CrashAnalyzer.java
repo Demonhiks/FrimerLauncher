@@ -28,7 +28,7 @@ public final class CrashAnalyzer {
             new Hint("UnsupportedClassVersionError|compiled by a more recent version of the Java Runtime",
                     "Неподходящая версия Java для этой версии Minecraft или загрузчика."),
             new Hint("Module [\\w.\\-]+ not found|java\\.lang\\.module\\.FindException|ResolutionException",
-                    "Загрузчик не нашёл нужную библиотеку. Удали папку этой версии в .mylauncher\\versions."),
+                    "Загрузчик не нашёл нужную библиотеку. Удали папку этой версии в .frimerlauncher\\versions."),
             new Hint("Mixin apply failed|MixinApplyError|InvalidMixinException|Mixin transformation",
                     "Конфликт модов (Mixin). Отключи недавно добавленные моды."),
             new Hint("Incompatible mods found|Missing or unsupported mandatory dependencies|Unmet dependency|"

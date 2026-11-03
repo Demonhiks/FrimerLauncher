@@ -15,6 +15,10 @@ public final class Changelog {
     /** Свежие версии сверху. */
     public static List<Entry> entries() {
         return List.of(
+                new Entry("2.3.1", "03.11.2026", List.of(
+                        "Папка данных переименована: ~/.mylauncher → ~/.frimerlauncher (C:\\Users\\<имя>\\.frimerlauncher)",
+                        "Старые данные подхватываются сами — при первом запуске папка переименовывается автоматически",
+                        "README: в разделе про доступ для друзей оставлен только playit.gg")),
                 new Entry("2.3.0", "03.11.2026", List.of(
                         "Можно запускать несколько сборок одновременно — у запущенных горит зелёная точка",
                         "Проверка файлов сборки (клиент, библиотеки, ассеты) с починкой в один клик",
@@ -23,7 +27,7 @@ public final class Changelog {
                         "Плагины с Modrinth для серверов прямо из консоли",
                         "Мониторинг сервера (TPS, игроки) и авто-рестарт после падения",
                         "RCON-консоль: команды серверу без его окна",
-                        "Свои темы: JSON с цветами в ~/.mylauncher/themes + экспорт текущей",
+                        "Свои темы: JSON с цветами в ~/.frimerlauncher/themes + экспорт текущей",
                         "3D-превью скина с вращением мышью",
                         "Автообновление лаунчера через GitHub Releases")),
                 new Entry("2.2.0", "03.11.2026", List.of(
@@ -45,7 +49,7 @@ public final class Changelog {
                         "Vanilla, Fabric, Quilt, Forge, NeoForge и автоустановка Java",
                         "Сервера: Paper, Vanilla, Fabric, Forge, NeoForge, консоль и playit.gg",
                         "Скины, моды, импорт .mrpack, разбор крашей",
-                        "Папка данных та же: ~/.mylauncher — всё подхватилось сразу")));
+                        "Папка данных та же: ~/.frimerlauncher — всё подхватилось сразу")));
     }
     /** Самая свежая запись. */
     public static Entry latest() {
