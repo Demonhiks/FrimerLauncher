@@ -5,33 +5,37 @@ Minecraft-лаунчер, переписанный с Python (PyQt6) на **Java
 сам скачивает нужную версию Java и умеет импортировать сборки Modrinth.
 
 [![Скачать](https://img.shields.io/github/v/release/Demonhiks/FrimerLaunchers?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&color=f2a93b)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
-[![Java 17+](https://img.shields.io/badge/Java-17%2B-1a1f27?color=1a1f27)](https://adoptium.net/temurin/releases/?package=jre)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-1a1f27?color=1a1f27)](https://github.com/Demonhiks/FrimerLaunchers/releases/latest)
 
 ![Главное окно](docs/screenshot-main.png)
 
 ## Скачать
 
-Готовый `FrimerLauncher.jar` собирается автоматически и лежит в разделе
-**[Releases](../../releases)**. Постоянная ссылка на последнюю версию:
+Готовая сборка для Windows собирается автоматически и лежит в разделе
+**[Releases](../../releases)**.
+
+1. Скачайте **`FrimerLauncher-win64.zip`**.
+2. Распакуйте в любую папку (например, `C:\Frimer`).
+3. Запустите **`Frimer Launcher.exe`**.
+
+Java ставить не нужно — она уже внутри архива. Установка тоже не нужна:
+папку можно переносить куда угодно.
+
+Постоянная ссылка на последнюю версию:
 
 ```text
-https://github.com/Demonhiks/FrimerLaunchers/releases/latest/download/FrimerLauncher.jar
+https://github.com/Demonhiks/FrimerLaunchers/releases/latest/download/FrimerLauncher-win64.zip
 ```
 
-Нужна **Java 17 или новее** — проверьте:
-
-```bat
-java -version
-```
-
-Запуск:
+В релизе рядом лежит и обычный `FrimerLauncher.jar` — для Linux/macOS или если
+Java 17+ уже стоит:
 
 ```bat
 java -jar FrimerLauncher.jar
 ```
 
-Если Java нет — поставьте [Eclipse Temurin 21 JRE](https://adoptium.net/temurin/releases/?package=jre).
 Собрать самому из исходников тоже можно — см. «Сборка и запуск» ниже.
+
 ## Как пустить друзей на сервер
 
 **playit.gg** — лаунчер подхватывает локальный агент или скачивает его сам и открывает страницу подтверждения. Один клик — и туннель работает; друзьям ставить ничего не нужно.
@@ -127,6 +131,19 @@ mvn -q package
 java -jar target/FrimerLauncher.jar
 ```
 
+Портативная сборка (`Frimer Launcher.exe` со встроенной Java) — через `jpackage` из JDK 17+:
+
+```bat
+mvn -q package
+mkdir staging
+copy target\FrimerLauncher.jar staging\
+jpackage --type app-image --name "Frimer Launcher" --app-version 2.3.3 ^
+  --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main ^
+  --icon packaging\frimer.ico --dest dist
+```
+
+Результат — папка `dist\Frimer Launcher` с `Frimer Launcher.exe`; её и раздаёт CI в архиве.
+
 ## Где лежат данные
 
 Данные лежат в `~/.frimerlauncher` (`C:\Users\<имя>\.frimerlauncher`) — сборки, сервера и настройки из Python-версии подхватываются сами. Старая папка `~/.mylauncher` при первом запуске новой версии переименовывается автоматически:
@@ -166,6 +183,7 @@ tools/                        служебные утилиты разработ
 ├── TestModrinth.java         поиск и установка мода с Modrinth в временную папку
 └── UiShots.java              рендер всех окон в build/ui (проверка вёрстки)
 legacy/launcher.py            исходная Python-версия для сверки поведения
+packaging/frimer.ico          значок приложения для jpackage
 ```
 
 ## Что перенесено, а что нет

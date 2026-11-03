@@ -72,11 +72,21 @@ public final class UpdateDialog extends Ui.FramelessDialog {
         bar.setPreferredSize(new Dimension(0, 8));
         bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 8));
 
+        boolean portable = Updater.portable();
         status.setFont(Theme.uiFont(Font.PLAIN, 12));
         status.setForeground(theme.muted);
+        if (portable) {
+            status.setText("Портативная сборка: скачайте архив со страницы релиза и распакуйте поверх.");
+        }
 
-        install = Ui.primaryButton("Скачать и перезапустить", theme);
-        install.addActionListener(e -> startDownload());
+        install = Ui.primaryButton(portable ? "Скачать новую версию" : "Скачать и перезапустить", theme);
+        install.addActionListener(e -> {
+            if (portable) {
+                ModrinthOpen.open(info.pageUrl());
+            } else {
+                startDownload();
+            }
+        });
         JButton page = Ui.button("Страница релиза", theme);
         page.addActionListener(e -> ModrinthOpen.open(info.pageUrl()));
         JButton later = Ui.miniButton("Позже", theme);

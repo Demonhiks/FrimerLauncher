@@ -26,6 +26,29 @@ public final class Updater {
     public record Info(String version, String downloadUrl, String notes, String pageUrl) {
     }
 
+    /**
+     * Лаунчер запущен как приложение (.exe со встроенной Java), а не как jar.
+     *
+     * <p>Признаки: переменная jpackage или раскладка app-image —
+     * {@code <папка>/app/FrimerLauncher.jar} рядом с {@code <папка>/runtime}.
+     */
+    public static boolean portable() {
+        if (System.getProperty("jpackage.app-path") != null) {
+            return true;
+        }
+        try {
+            Path jar = Path.of(Updater.class.getProtectionDomain().getCodeSource()
+                    .getLocation().toURI());
+            Path appDir = jar.getParent();
+            Path root = appDir == null ? null : appDir.getParent();
+            return root != null
+                    && Files.isDirectory(root.resolve("runtime"))
+                    && Files.isRegularFile(appDir.resolve("FrimerLauncher.jar"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** Последний релиз, если он новее текущей версии (иначе null). */
     public static Info latest() {
         String body;

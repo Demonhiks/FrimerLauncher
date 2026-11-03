@@ -1179,4 +1179,28 @@ public final class Ui {
             }
         });
     }
+
+    /** Иконка окна: янтарный квадрат с буквой F — рисуется кодом, файлы не нужны. */
+    public static BufferedImage appIcon() {
+        int size = 128;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g.setPaint(new java.awt.GradientPaint(0, 0, new Color(0xffc45c), 0, size,
+                    new Color(0xffab2e)));
+            g.fillRoundRect(0, 0, size, size, size / 3, size / 3);
+            g.setColor(new Color(0x12161b));
+            g.setFont(new Font("Segoe UI", Font.BOLD, (int) (size * 0.68)));
+            java.awt.FontMetrics metrics = g.getFontMetrics();
+            int x = (size - metrics.stringWidth("F")) / 2;
+            int y = (size - metrics.getHeight()) / 2 + metrics.getAscent();
+            g.drawString("F", x, y);
+        } finally {
+            g.dispose();
+        }
+        return image;
+    }
 }

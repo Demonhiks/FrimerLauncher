@@ -10,7 +10,7 @@ public final class AppSettings {
 
     private static final Preferences PREFS = Preferences.userRoot().node("com/frimer/launcher");
 
-    public static final String APP_VERSION = "2.3.2";
+    public static final String APP_VERSION = "2.3.3";
 
     private AppSettings() {
     }

@@ -116,7 +116,8 @@ public final class MainFrame extends JFrame {
     private JScrollPane logScroll;
 
     public MainFrame() {
-        super("Frimer");
+        super("Frimer Launcher");
+        setIconImage(Ui.appIcon());
         theme = com.frimer.launcher.core.Themes.load(AppSettings.theme());
         applyUiDefaults(theme);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);

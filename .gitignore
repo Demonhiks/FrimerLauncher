@@ -1,9 +1,11 @@
-# Gala-артефакты сборки
+# артефакты сборки
 build/
 out/
 dist/
+staging/
 target/
 *.class
+FrimerLauncher-win64.zip
 
 # IDE
 .idea/
@@ -16,5 +18,5 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# �������� CI (������� � ������)
+# артефакт CI (заметки к релизу)
 changes.md

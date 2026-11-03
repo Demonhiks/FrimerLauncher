@@ -11,7 +11,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # jpackage для Windows-сборки — только на windows-раннере
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,17 +27,12 @@ jobs:
       - name: Build jar
         run: mvn -B -q package
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: FrimerLauncher
-          path: target/FrimerLauncher.jar
-
       - name: Build release notes
         if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         run: |
           VER="${GITHUB_REF_NAME#v}"
-          python3 - "$VER" <<'EOF'
+          python - "$VER" <<'EOF'
           import re, sys
 
           ver = sys.argv[1]
@@ -67,19 +63,17 @@ jobs:
           lines += [
               "",
               "### Как запустить",
-              "1. Скачайте `FrimerLauncher.jar` ниже.",
-              "2. Нужна **Java 17 или новее** (проверить: `java -version`).",
-              "3. Запустите:",
+              "1. Скачайте `FrimerLauncher-win64.zip` ниже.",
+              "2. Распакуйте в любую папку.",
+              "3. Запустите `Frimer Launcher.exe` — Java ставить не нужно, она уже внутри.",
               "",
-              "```bat",
-              "java -jar FrimerLauncher.jar",
-              "```",
+              "Обычный jar тоже лежит в релизе: `java -jar FrimerLauncher.jar` (нужна Java 17+).",
               "",
               "Данные лежат в `~/.frimerlauncher` (`C:\\Users\\<имя>\\.frimerlauncher`) — сборки,",
               "сервера и настройки из Python-версии подхватываются сами.",
               "",
               "> Windows SmartScreen может предупредить о неизвестном издателе — это обычное",
-              "> поведение для jar без цифровой подписи, «Подробнее» → «Выполнить в любом случае».",
+              "> поведение для неподписанной сборки, «Подробнее» → «Выполнить в любом случае».",
           ]
 
           text = "\n".join(lines) + "\n"
@@ -88,9 +82,36 @@ jobs:
           print(text)
           EOF
 
+      - name: Build portable app image
+        shell: pwsh
+        run: |
+          $ver = "$env:GITHUB_REF_NAME" -replace '^v', ''
+          if ($ver -notmatch '^\d+(\.\d+){0,2}$') { $ver = '1.0.0' }
+          Write-Host "app-version: $ver"
+          New-Item -ItemType Directory -Force -Path staging | Out-Null
+          Copy-Item target\FrimerLauncher.jar staging\
+          jpackage --type app-image --name "Frimer Launcher" --app-version $ver --input staging --main-jar FrimerLauncher.jar --main-class com.frimer.launcher.Main --icon packaging\frimer.ico --dest dist --win-console false --vendor Frimer
+          Compress-Archive -Path "dist\Frimer Launcher\*" -DestinationPath "FrimerLauncher-win64.zip" -Force
+          Write-Host ("exe: " + (Get-Item "dist\Frimer Launcher\Frimer Launcher.exe").Length + " bytes")
+          Write-Host ("zip: " + (Get-Item "FrimerLauncher-win64.zip").Length + " bytes")
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrimerLauncher-jar
+          path: target/FrimerLauncher.jar
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrimerLauncher-win64
+          path: FrimerLauncher-win64.zip
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/FrimerLauncher.jar
+          files: |
+            target/FrimerLauncher.jar
+            FrimerLauncher-win64.zip
           body_path: changes.md
