@@ -82,15 +82,8 @@ public final class NewServerDialog extends Ui.FramelessDialog {
         root.add(fieldLabel("Порт (по умолчанию 25565)"));
         portSpinner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         portSpinner.setAlignmentX(Component.LEFT_ALIGNMENT);
-        portSpinner.setBorder(BorderFactory.createLineBorder(theme.border));
-        portSpinner.setBackground(theme.input);
-        javax.swing.JSpinner.NumberEditor portEditor =
-                new javax.swing.JSpinner.NumberEditor(portSpinner, "#");
-        portEditor.getTextField().setBackground(theme.input);
-        portEditor.getTextField().setForeground(theme.text);
-        portEditor.getTextField().setCaretColor(theme.accent);
-        portEditor.getTextField().setBorder(new EmptyBorder(4, 8, 4, 8));
-        portSpinner.setEditor(portEditor);
+        portSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(portSpinner, "#"));
+        Ui.styleSpinner(portSpinner, theme);
         root.add(portSpinner);
         root.add(Box.createVerticalStrut(12));
 

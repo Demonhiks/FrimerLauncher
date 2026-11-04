@@ -269,12 +269,10 @@ public final class FriendsPanel extends JPanel implements Friends.Listener {
             listPanel.add(Ui.muted("Пока никого. Добавь друга по коду.", theme));
         }
         for (FriendStore.Friend friend : friendsList) {
-            JButton row = new JButton();
+            Ui.Card row = new Ui.Card(friend.code.equals(selected) ? theme.cardSel : theme.card,
+                    theme.border);
             row.setLayout(new BorderLayout(6, 0));
-            row.setOpaque(true);
             row.setBorder(new EmptyBorder(8, 10, 8, 10));
-            row.setBackground(friend.code.equals(selected) ? theme.cardSel : theme.card);
-            row.setHorizontalAlignment(SwingConstants.LEFT);
             JLabel dot = Ui.label(friend.online() ? "●" : "○", Theme.uiFont(Font.BOLD, 12),
                     friend.online() ? theme.ok : theme.muted);
             JLabel name = Ui.label(friend.nick, Theme.uiFont(Font.BOLD, 13), theme.text);
@@ -291,7 +289,13 @@ public final class FriendsPanel extends JPanel implements Friends.Listener {
             row.add(text, BorderLayout.CENTER);
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
-            row.addActionListener(e -> selectFriend(friend.code));
+            row.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mousePressed(java.awt.event.MouseEvent e) {
+                    selectFriend(friend.code);
+                }
+            });
+            row.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
             listPanel.add(row);
             listPanel.add(Box.createVerticalStrut(4));
         }

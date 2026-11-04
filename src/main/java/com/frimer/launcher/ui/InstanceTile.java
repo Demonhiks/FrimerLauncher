@@ -15,14 +15,14 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-/** Плитка сборки: бейдж загрузчика, название, версия и число модов. */
+/** Плитка сборки — маленький квадрат с иконкой загрузчика и названием. */
 public final class InstanceTile extends Ui.Card {
 
     private static final long serialVersionUID = 1L;
@@ -36,7 +36,9 @@ public final class InstanceTile extends Ui.Card {
         void onMenu(Instance instance, java.awt.Point point);
     }
 
-    public static final Dimension SIZE = new Dimension(286, 74);
+    /** Сторона квадрата: плитки встают в сетку как в классическом лаунчере. */
+    public static final int SIDE = 116;
+    public static final Dimension SIZE = new Dimension(SIDE, SIDE);
 
     private final Instance instance;
     private final Theme theme;
@@ -51,41 +53,43 @@ public final class InstanceTile extends Ui.Card {
         this.theme = theme;
         setRadius(Theme.RADIUS_TILE);
         setGradient(theme.cardTop(), theme.cardBottom());
-        setLayout(new BorderLayout(14, 0));
-        setBorder(new EmptyBorder(10, 12, 10, 12));
+        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(8, 6, 8, 6));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setPreferredSize(SIZE);
-        setMinimumSize(new Dimension(220, SIZE.height));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, SIZE.height));
+        setMinimumSize(SIZE);
+        setMaximumSize(SIZE);
+
+        JPanel column = new JPanel();
+        column.setOpaque(false);
+        column.setLayout(new javax.swing.BoxLayout(column, javax.swing.BoxLayout.Y_AXIS));
 
         JLabel icon = new JLabel(iconFor(instance, theme, 46));
-        icon.setPreferredSize(new Dimension(46, 46));
+        icon.setAlignmentX(Component.CENTER_ALIGNMENT);
         icon.setHorizontalAlignment(SwingConstants.CENTER);
-        add(icon, BorderLayout.WEST);
 
-        JPanel text = new JPanel();
-        text.setOpaque(false);
-        text.setLayout(new javax.swing.BoxLayout(text, javax.swing.BoxLayout.Y_AXIS));
-        text.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-
-        nameLabel = new JLabel(instance.name);
-        nameLabel.setFont(Theme.titleFont(Font.BOLD, 14));
+        nameLabel = new JLabel(shortName(instance.name));
+        nameLabel.setFont(Theme.uiFont(Font.BOLD, 12));
         nameLabel.setForeground(theme.text);
-        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         int mods = Utils.countMods(instance.folder);
         subLabel = new JLabel(instance.loader + " " + instance.mcVersion
-                + (mods > 0 ? "  ·  " + mods + " мод" + plural(mods) : ""));
-        subLabel.setFont(Theme.uiFont(Font.PLAIN, 11));
+                + (mods > 0 ? " · " + mods : ""));
+        subLabel.setFont(Theme.uiFont(Font.PLAIN, 10));
         subLabel.setForeground(theme.muted);
-        subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        subLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        text.add(javax.swing.Box.createVerticalGlue());
-        text.add(nameLabel);
-        text.add(javax.swing.Box.createVerticalStrut(4));
-        text.add(subLabel);
-        text.add(javax.swing.Box.createVerticalGlue());
-        add(text, BorderLayout.CENTER);
+        column.add(Box.createVerticalGlue());
+        column.add(icon);
+        column.add(Box.createVerticalStrut(6));
+        column.add(nameLabel);
+        column.add(Box.createVerticalStrut(2));
+        column.add(subLabel);
+        column.add(Box.createVerticalGlue());
+        add(column, BorderLayout.CENTER);
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -141,14 +145,14 @@ public final class InstanceTile extends Ui.Card {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(theme.ok);
-        g2.fillOval(getWidth() - 20, 12, 8, 8);
+        g2.fillOval(getWidth() - 18, 10, 8, 8);
         g2.setColor(theme.bg);
-        g2.drawOval(getWidth() - 20, 12, 8, 8);
+        g2.drawOval(getWidth() - 18, 10, 8, 8);
         g2.dispose();
     }
 
     public void setDisplayName(String name) {
-        nameLabel.setText(name);
+        nameLabel.setText(shortName(name));
     }
 
     public void setSelected(boolean selected) {
@@ -168,19 +172,12 @@ public final class InstanceTile extends Ui.Card {
         }
     }
 
-    private static String plural(int mods) {
-        int mod100 = mods % 100;
-        int mod10 = mods % 10;
-        if (mod100 >= 11 && mod100 <= 14) {
-            return "ов";
-        }
-        if (mod10 == 1) {
+    /** Длинные названия режем, чтобы влезли в квадрат. */
+    private static String shortName(String name) {
+        if (name == null) {
             return "";
         }
-        if (mod10 >= 2 && mod10 <= 4) {
-            return "а";
-        }
-        return "ов";
+        return name.length() <= 15 ? name : name.substring(0, 14) + "…";
     }
 
     /** Иконка сборки: своя icon.png либо бейдж загрузчика. */

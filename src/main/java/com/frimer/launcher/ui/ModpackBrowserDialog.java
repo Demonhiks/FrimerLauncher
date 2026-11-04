@@ -201,7 +201,7 @@ public final class ModpackBrowserDialog extends Ui.FramelessDialog {
                 if (hit.iconUrl().isEmpty() || iconBytes.containsKey(hit.id())) {
                     continue;
                 }
-                byte[] bytes = Downloader.fetchBytes(hit.iconUrl());
+                byte[] bytes = com.frimer.launcher.core.IconImages.fetch(hit.iconUrl());
                 if (bytes != null) {
                     iconBytes.put(hit.id(), bytes);
                     SwingUtilities.invokeLater(list::repaint);

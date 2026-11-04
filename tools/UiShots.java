@@ -89,7 +89,7 @@ public final class UiShots {
         if (instance != null) {
             capture(new EditInstanceDialog(frame, theme, instance), "04-edit-instance", 420, 330);
         }
-        capture(new SettingsDialog(frame, theme), "05-settings", 440, 560);
+        capture(new SettingsDialog(frame, theme), "05-settings", 440, 500);
         capture(new NewServerDialog(frame, theme), "06-new-server", 440, 520);
         if (instance != null) {
             capture(new ModsDialog(frame, theme, instance), "07-mods", 700, 520);
@@ -153,7 +153,7 @@ public final class UiShots {
         if (themeCombo != null) {
             SwingUtilities.invokeAndWait(() -> themeCombo.setPopupVisible(true));
             Thread.sleep(600);
-            shot(settingsDialog, "13-settings-combo-open", 440, 560);
+            shot(settingsDialog, "13-settings-combo-open", 440, 500);
             SwingUtilities.invokeAndWait(() -> themeCombo.setPopupVisible(false));
         }
         SwingUtilities.invokeAndWait(settingsDialog::dispose);

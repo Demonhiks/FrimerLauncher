@@ -31,6 +31,9 @@ import java.util.UUID;
  */
 public final class DiscordRpc {
 
+    /** ID приложения Frimer Launcher в Discord Developer Portal. */
+    public static final String APP_ID = "1550637763550904390";
+
     private static final int OP_HANDSHAKE = 0;
     private static final int OP_FRAME = 1;
     private static final int OP_PING = 3;

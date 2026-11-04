@@ -1153,8 +1153,20 @@ public final class Ui {
 
     /** Список JComboBox в цветах темы: иначе выпадающий список белый с нечитаемым текстом. */
     public static void styleCombo(JComboBox<String> combo, Theme theme) {
+        combo.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+            @Override
+            protected JButton createArrowButton() {
+                JButton arrow = new JButton(Ui.chevron(theme, false));
+                arrow.setBackground(theme.input);
+                arrow.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+                arrow.setFocusable(false);
+                arrow.setOpaque(true);
+                return arrow;
+            }
+        });
         combo.setBackground(theme.input);
         combo.setForeground(theme.text);
+        combo.setBorder(javax.swing.BorderFactory.createLineBorder(theme.border));
         combo.setFont(Theme.uiFont(Font.PLAIN, 14));
         combo.setRenderer(new javax.swing.DefaultListCellRenderer() {
             private static final long serialVersionUID = 1L;
@@ -1178,6 +1190,21 @@ public final class Ui {
                 return label;
             }
         });
+    }
+
+    /** Спиннер в цветах темы: системные стрелки иначе белые. */
+    public static void styleSpinner(javax.swing.JSpinner spinner, Theme theme) {
+        spinner.setUI(new javax.swing.plaf.basic.BasicSpinnerUI());
+        spinner.setBackground(theme.input);
+        spinner.setForeground(theme.text);
+        spinner.setFont(Theme.uiFont(Font.PLAIN, 14));
+        spinner.setBorder(javax.swing.BorderFactory.createLineBorder(theme.border));
+        if (spinner.getEditor() instanceof javax.swing.JSpinner.DefaultEditor editor) {
+            editor.getTextField().setBackground(theme.input);
+            editor.getTextField().setForeground(theme.text);
+            editor.getTextField().setCaretColor(theme.accent);
+            editor.getTextField().setBorder(new EmptyBorder(4, 8, 4, 8));
+        }
     }
 
     /** Иконка окна: янтарный квадрат с буквой F — рисуется кодом, файлы не нужны. */

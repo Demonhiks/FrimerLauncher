@@ -228,7 +228,7 @@ public final class ModrinthDialog extends Ui.FramelessDialog {
                 if (hit.iconUrl().isEmpty() || iconBytes.containsKey(hit.id())) {
                     continue;
                 }
-                byte[] data = com.frimer.launcher.core.Downloader.fetchBytes(hit.iconUrl());
+                byte[] data = com.frimer.launcher.core.IconImages.fetch(hit.iconUrl());
                 if (data != null) {
                     iconBytes.put(hit.id(), data);
                     SwingUtilities.invokeLater(list::repaint);

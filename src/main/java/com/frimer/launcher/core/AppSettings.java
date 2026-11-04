@@ -10,7 +10,7 @@ public final class AppSettings {
 
     private static final Preferences PREFS = Preferences.userRoot().node("com/frimer/launcher");
 
-    public static final String APP_VERSION = "2.3.7";
+    public static final String APP_VERSION = "2.3.8";
 
     private AppSettings() {
     }
@@ -32,13 +32,13 @@ public final class AppSettings {
         PREFS.put("theme", theme);
     }
 
-    /** Discord Application ID для Rich Presence (пусто — выключено). */
-    public static String discordAppId() {
-        return PREFS.get("discord_app_id", "");
+    /** Показывать активность в Discord (Rich Presence). */
+    public static boolean discordRpc() {
+        return PREFS.getBoolean("discord_rpc", true);
     }
 
-    public static void setDiscordAppId(String id) {
-        PREFS.put("discord_app_id", id == null ? "" : id.trim());
+    public static void setDiscordRpc(boolean on) {
+        PREFS.putBoolean("discord_rpc", on);
     }
 
     public static int defaultRamMb() {

@@ -178,6 +178,38 @@ public final class MainFrame extends JFrame {
         javax.swing.UIManager.put("List.foreground", theme.text);
         javax.swing.UIManager.put("List.selectionBackground", theme.cardSel);
         javax.swing.UIManager.put("List.selectionForeground", theme.accent);
+
+        // Диалоги (JOptionPane), кнопки, поля и стрелки комбобоксов — в цветах темы,
+        // иначе системный LAF рисует белые окна и полосы.
+        javax.swing.UIManager.put("Panel.background", theme.bg);
+        javax.swing.UIManager.put("OptionPane.background", theme.bg);
+        javax.swing.UIManager.put("OptionPane.messageForeground", theme.text);
+        javax.swing.UIManager.put("OptionPane.buttonBackground", theme.input);
+        javax.swing.UIManager.put("OptionPane.buttonForeground", theme.text);
+        javax.swing.UIManager.put("Label.background", theme.bg);
+        javax.swing.UIManager.put("Label.foreground", theme.text);
+        javax.swing.UIManager.put("TextField.background", theme.input);
+        javax.swing.UIManager.put("TextField.foreground", theme.text);
+        javax.swing.UIManager.put("TextField.caretForeground", theme.accent);
+        javax.swing.UIManager.put("TextField.selectionBackground", theme.cardSel);
+        javax.swing.UIManager.put("TextField.selectionForeground", theme.accent);
+        javax.swing.UIManager.put("TextArea.background", theme.input);
+        javax.swing.UIManager.put("TextArea.foreground", theme.text);
+        javax.swing.UIManager.put("Button.background", theme.input);
+        javax.swing.UIManager.put("Button.foreground", theme.text);
+        javax.swing.UIManager.put("CheckBox.background", theme.bg);
+        javax.swing.UIManager.put("CheckBox.foreground", theme.text);
+        javax.swing.UIManager.put("ScrollPane.background", theme.bg);
+        javax.swing.UIManager.put("Viewport.background", theme.bg);
+        javax.swing.UIManager.put("Spinner.background", theme.input);
+        javax.swing.UIManager.put("Spinner.foreground", theme.text);
+        javax.swing.UIManager.put("ComboBox.buttonBackground", theme.input);
+        javax.swing.UIManager.put("ComboBox.buttonShadow", theme.border);
+        javax.swing.UIManager.put("ComboBox.buttonDarkShadow", theme.bg);
+        javax.swing.UIManager.put("ComboBox.buttonHighlight", theme.card);
+        // Системный LAF рисует кнопки диалогов своей краской — переводим на базовый.
+        javax.swing.UIManager.put("ButtonUI", "javax.swing.plaf.basic.BasicButtonUI");
+        javax.swing.UIManager.put("OptionPane.background", theme.bg);
     }
 
     /** Реагировать на изменение размера окна. */
@@ -733,8 +765,8 @@ public final class MainFrame extends JFrame {
         card.setGradient(theme.cardTop(), theme.cardBottom());
         card.setLayout(new BorderLayout(14, 0));
         card.setBorder(new EmptyBorder(8, 10, 8, 10));
-        card.setPreferredSize(InstanceTile.SIZE);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, InstanceTile.SIZE.height));
+        card.setPreferredSize(new Dimension(240, 74));
+        card.setMaximumSize(new Dimension(240, 74));
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JLabel icon = new JLabel(Ui.badge(ServerStore.coreLabel(srv.core).substring(0, 1),
@@ -1741,7 +1773,7 @@ public final class MainFrame extends JFrame {
 
     /** Показать «что нового», если версия ещё не просмотрена, и проверить обновления. */
     public void afterShow() {
-        DiscordRpc.configure(AppSettings.discordAppId());
+        DiscordRpc.configure(AppSettings.discordRpc() ? DiscordRpc.APP_ID : "");
         DiscordRpc.idle();
         String migrationWarning = Dirs.migrationWarning();
         if (migrationWarning != null) {

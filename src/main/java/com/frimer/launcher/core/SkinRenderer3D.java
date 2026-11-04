@@ -66,10 +66,14 @@ public final class SkinRenderer3D {
         int w = Math.max(1, width);
         int h = Math.max(1, height);
         BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = out.createGraphics();
+        // Рисуем в 2× и уменьшаем: пиксельная текстура остаётся резкой, а края — гладкими.
+        final int ss = 2;
+        BufferedImage big = new BufferedImage(w * ss, h * ss, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = big.createGraphics();
+        g.scale(ss, ss);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
         double radians = Math.toRadians(yaw);
         double cos = Math.cos(radians);
@@ -157,6 +161,12 @@ public final class SkinRenderer3D {
             g.setClip(oldClip);
         }
         g.dispose();
+        Graphics2D down = out.createGraphics();
+        down.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        down.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        down.drawImage(big, 0, 0, w, h, null);
+        down.dispose();
         return out;
     }
 

@@ -15,6 +15,11 @@ public final class Changelog {
     /** Свежие версии сверху. */
     public static List<Entry> entries() {
         return List.of(
+                new Entry("2.3.8", "05.11.2026", List.of(
+                        "Discord Rich Presence включается галочкой в настройках — Application ID уже вписан",
+                        "Белые окна и полосы: диалоги, кнопки, комбобоксы и спиннеры теперь в цветах темы",
+                        "Иконки модов и сборок с Modrinth грузятся: WebP конвертируется в PNG",
+                        "3D-скины в двойном разрешении — без размытия, плитки сборок стали маленькими квадратами")),
                 new Entry("2.3.7", "05.11.2026", List.of(
                         "Discord Rich Presence: в настройках указывается Application ID, в профиле видно сборку",
                         "Свой клиент Discord IPC без библиотек: пайп на Windows, unix-сокет на Linux и macOS")),

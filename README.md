@@ -84,9 +84,8 @@ java -jar FrimerLauncher.jar
 
 В профиле Discord видно, во что ты играешь: сборку, загрузчик и версию.
 
-1. [Discord Developer Portal](https://discord.com/developers/applications) → **New Application**.
-2. **General Information** → скопируй **Application ID** (число из ~19 цифр, не секрет).
-3. В лаунчере: **Настройки** → поле «Discord Rich Presence — Application ID» → **Сохранить**.
+Включается галочкой: **Настройки → Discord Rich Presence → «Показывать активность в Discord»**.
+Application ID уже вписан в лаунчер, вводить ничего не нужно.
 
 Нужен запущенный десктоп-клиент Discord. Картинку активности можно загрузить
 в том же приложении (Rich Presence → Art Assets).
