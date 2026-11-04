@@ -28,6 +28,7 @@ public final class SettingsDialog extends Ui.FramelessDialog {
 
     private final Theme theme;
     private final JTextField nickField;
+    private final JTextField discordField;
     private final JComboBox<String> themeCombo = new JComboBox<>(com.frimer.launcher.core.Themes.names().toArray(new String[0]));
     private final JSlider ramSlider = new JSlider(1024, 16384, AppSettings.defaultRamMb());
     private final JLabel ramLabel = new JLabel();
@@ -37,6 +38,8 @@ public final class SettingsDialog extends Ui.FramelessDialog {
         super(owner, "Настройки", true, theme);
         this.theme = theme;
         nickField = new Ui.Field(theme, AppSettings.nickname());
+        discordField = new Ui.Field(theme, "например 1234567890123456789");
+        discordField.setText(AppSettings.discordAppId());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JPanel root = new JPanel();
@@ -98,6 +101,17 @@ public final class SettingsDialog extends Ui.FramelessDialog {
         root.add(ramLabel);
         root.add(Box.createVerticalStrut(14));
 
+        root.add(fieldLabel("Discord Rich Presence — Application ID"));
+        discordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        discordField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        root.add(discordField);
+        JLabel discordHint = new JLabel("<html><body style='width:380px'>ID — Developer Portal → General Information. Пусто — выключить.</body></html>");
+        discordHint.setFont(Theme.uiFont(Font.PLAIN, 11));
+        discordHint.setForeground(theme.muted);
+        discordHint.setAlignmentX(Component.LEFT_ALIGNMENT);
+        root.add(discordHint);
+        root.add(Box.createVerticalStrut(14));
+
         JLabel pathLabel = new JLabel("<html><body style='width:340px'>Папка игры: "
                 + Dirs.GAME_DIR + "</body></html>");
         pathLabel.setFont(Theme.uiFont(Font.PLAIN, 11));
@@ -133,7 +147,7 @@ public final class SettingsDialog extends Ui.FramelessDialog {
         Ui.alignLeft(root);
         setContentPane(root);
         updateRamLabel();
-        setSize(new Dimension(440, 430));
+        setSize(new Dimension(440, 560));
         setResizable(false);
         setLocationRelativeTo(owner);
     }
@@ -159,6 +173,15 @@ public final class SettingsDialog extends Ui.FramelessDialog {
         AppSettings.setNickname(nick);
         AppSettings.setTheme((String) themeCombo.getSelectedItem());
         AppSettings.setDefaultRamMb(ramSlider.getValue());
+        String discordId = discordField.getText().strip();
+        if (!discordId.isEmpty() && !com.frimer.launcher.core.presence.DiscordRpc.valid(discordId)) {
+            JOptionPane.showMessageDialog(this,
+                    "Application ID — это число из ~19 цифр (Discord Developer Portal → General Information).",
+                    "Неверный Application ID", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        AppSettings.setDiscordAppId(discordId);
+        com.frimer.launcher.core.presence.DiscordRpc.configure(discordId);
         AppSettings.flush();
         saved = true;
         dispose();

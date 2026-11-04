@@ -15,6 +15,9 @@ public final class Changelog {
     /** Свежие версии сверху. */
     public static List<Entry> entries() {
         return List.of(
+                new Entry("2.3.7", "05.11.2026", List.of(
+                        "Discord Rich Presence: в настройках указывается Application ID, в профиле видно сборку",
+                        "Свой клиент Discord IPC без библиотек: пайп на Windows, unix-сокет на Linux и macOS")),
                 new Entry("2.3.6", "04.11.2026", List.of(
                         "Linux-архив: папка frimer-launcher без пробелов и скрипт run.sh — запуск одной командой",
                         "В архиве лежит README.txt с командой запуска")),

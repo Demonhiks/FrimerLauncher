@@ -11,6 +11,7 @@ import com.frimer.launcher.core.ServerInstallers;
 import com.frimer.launcher.core.ServerRunner;
 import com.frimer.launcher.core.ServerStore;
 import com.frimer.launcher.core.Utils;
+import com.frimer.launcher.core.presence.DiscordRpc;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -1154,6 +1155,7 @@ public final class MainFrame extends JFrame {
 
             @Override
             public void onGameStarted(long timestamp) {
+                DiscordRpc.playing(inst.name + " · " + inst.loader + " " + inst.mcVersion, "Играет");
                 SwingUtilities.invokeLater(() -> {
                     setStatus("Игра запущена: " + inst.name);
                     setFraction(0, 0);
@@ -1165,6 +1167,7 @@ public final class MainFrame extends JFrame {
                 SwingUtilities.invokeLater(() -> {
                     running.remove(inst.folder);
                     refreshRunningUi();
+                    DiscordRpc.idle();
                     setStatus("Игра закрыта: " + inst.name + " (код " + code + ")");
                     if (current != null && current.folder.equals(inst.folder)) {
                         selectInstance(inst);
@@ -1178,6 +1181,7 @@ public final class MainFrame extends JFrame {
                     running.remove(inst.folder);
                     refreshRunningUi();
                     setFraction(0, 0);
+                    DiscordRpc.idle();
                     setStatus("Ошибка запуска: " + inst.name);
                     appendLog("ОШИБКА: " + error);
                     logScroll.setVisible(true);
@@ -1737,6 +1741,8 @@ public final class MainFrame extends JFrame {
 
     /** Показать «что нового», если версия ещё не просмотрена, и проверить обновления. */
     public void afterShow() {
+        DiscordRpc.configure(AppSettings.discordAppId());
+        DiscordRpc.idle();
         String migrationWarning = Dirs.migrationWarning();
         if (migrationWarning != null) {
             appendLog("[данные] " + migrationWarning);
