@@ -51,9 +51,9 @@ public final class Theme {
     }
 
     public static final Theme DARK = new Theme("dark",
-            "#0f1216", "#14181e", "#1a1f27", "#3a2f16", "#232a34",
-            "#e8ecf2", "#8b96a8", "#ffab2e", "#c47a12", "#ffc45c",
-            "#12161b", "#ff6b6b", "#ffcc66", "#7ad47a", "#212734", "#5b657a");
+            "#0a0e14", "#0d1219", "#151c26", "#332811", "#252e3c",
+            "#e9eef7", "#8d99ad", "#ffb02e", "#c47a12", "#ffd07a",
+            "#0e141b", "#ff6b6b", "#ffcc66", "#7ad47a", "#1c2431", "#5b657a");
 
     public static final Theme LIGHT = new Theme("light",
             "#f2f4f8", "#ffffff", "#ffffff", "#fff1d6", "#e1e6ee",

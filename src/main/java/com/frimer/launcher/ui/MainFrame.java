@@ -78,6 +78,10 @@ public final class MainFrame extends JFrame {
     private JButton tabFriendsButton;
     private final java.awt.CardLayout contentCards = new java.awt.CardLayout();
     private final JPanel contentHolder = new JPanel(contentCards);
+
+    {
+        contentHolder.setOpaque(false);
+    }
     private FriendsPanel friendsPanel;
     private JLabel sectionLabel;
     private JButton newInstButton;
@@ -135,8 +139,7 @@ public final class MainFrame extends JFrame {
         setLocation(bounds.x + Math.max(0, (bounds.width - width) / 2),
                 bounds.y + Math.max(0, (bounds.height - height) / 2));
 
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(theme.bg);
+        JPanel root = new Ui.Backdrop(theme);
         sidebarPanel = buildSidebar();
         root.add(sidebarPanel, BorderLayout.WEST);
         contentHolder.add(buildContent(), "main");
@@ -457,7 +460,7 @@ public final class MainFrame extends JFrame {
 
     private JComponent buildContent() {
         JPanel content = new JPanel();
-        content.setBackground(theme.bg);
+        content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBorder(new EmptyBorder(24, 28, 20, 28));
 
@@ -503,8 +506,10 @@ public final class MainFrame extends JFrame {
         content.add(Box.createVerticalStrut(12));
 
         tilesPanel = new WrapPanel(12);
-        tilesPanel.setBackground(theme.bg);
+        tilesPanel.setOpaque(false);
         tilesScroll = Ui.borderlessScroll(tilesPanel, theme);
+        tilesScroll.setOpaque(false);
+        tilesScroll.getViewport().setOpaque(false);
         tilesScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(tilesScroll);
 
@@ -593,13 +598,13 @@ public final class MainFrame extends JFrame {
 
     private Ui.Card buildHero() {
         Ui.Card hero = new Ui.Card(theme.card, theme.border);
-        hero.setRadius(14);
+        hero.setRadius(18);
         hero.setGradient(theme.cardTop(), theme.cardBottom());
         hero.setShadow(Ui.shadow(theme));
         hero.setLayout(new BorderLayout(16, 0));
         hero.setBorder(new EmptyBorder(12, 16, 12, 16));
-        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 104));
-        hero.setPreferredSize(new Dimension(10, 104));
+        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 112));
+        hero.setPreferredSize(new Dimension(10, 112));
 
         heroIcon = new JLabel();
         heroIcon.setHorizontalAlignment(SwingConstants.CENTER);
@@ -610,8 +615,8 @@ public final class MainFrame extends JFrame {
         iconBox.setPreferredSize(new Dimension(72, 72));
         iconBox.setMaximumSize(new Dimension(72, 72));
         iconBox.add(heroIcon, java.awt.BorderLayout.CENTER);
-        JPanel iconWrap = new JPanel(new java.awt.BorderLayout());
-        iconWrap.setOpaque(false);
+        Ui.Glow iconWrap = new Ui.Glow(theme);
+        iconWrap.setBorder(new EmptyBorder(6, 6, 6, 6));
         iconWrap.add(iconBox, java.awt.BorderLayout.CENTER);
         hero.add(iconWrap, BorderLayout.WEST);
 

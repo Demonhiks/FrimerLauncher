@@ -82,6 +82,8 @@ public final class SkinDialog extends Ui.FramelessDialog {
         fromFile.addActionListener(e -> addFromFile());
         JButton byNick = Ui.miniButton("По нику…", theme);
         byNick.addActionListener(e -> addByNick());
+        JButton byEly = Ui.miniButton("Ely.by…", theme);
+        byEly.addActionListener(e -> addByEly());
         JButton remove = Ui.miniButton("Удалить", theme);
         remove.addActionListener(e -> deleteSelected());
         JButton apply = Ui.primaryButton("Применить в сборки", theme);
@@ -91,7 +93,7 @@ public final class SkinDialog extends Ui.FramelessDialog {
 
         JPanel buttons = new JPanel(new BorderLayout(8, 0));
         buttons.setOpaque(false);
-        buttons.add(Ui.buttonRow(fromFile, byNick, remove, apply), BorderLayout.CENTER);
+        buttons.add(Ui.buttonRow(fromFile, byNick, byEly, remove, apply), BorderLayout.CENTER);
         buttons.add(close, BorderLayout.EAST);
 
         root.add(listScroll, BorderLayout.WEST);
@@ -173,6 +175,30 @@ public final class SkinDialog extends Ui.FramelessDialog {
             reload();
         } catch (RuntimeException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Не удалось получить скин",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Скачать скин по нику с Ely.by (или проксированный Mojang-скин). */
+    private void addByEly() {
+        String nick = JOptionPane.showInputDialog(this,
+                "Ник на Ely.by:", "Скин с Ely.by", JOptionPane.PLAIN_MESSAGE);
+        if (nick == null || nick.isBlank()) {
+            return;
+        }
+        String clean = nick.strip();
+        byte[] data = com.frimer.launcher.core.ElyBy.skin(clean);
+        if (data == null) {
+            JOptionPane.showMessageDialog(this,
+                    "У Ely.by нет скина для «" + clean + "». Проверь ник.",
+                    "Скин не найден", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            Skins.addLocal(data, clean, "Ely.by: " + clean);
+            reload();
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Не удалось сохранить скин",
                     JOptionPane.ERROR_MESSAGE);
         }
     }

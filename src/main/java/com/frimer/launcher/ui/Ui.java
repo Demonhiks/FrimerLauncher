@@ -1207,6 +1207,85 @@ public final class Ui {
         }
     }
 
+    /** Фон приложения: градиент, мягкое янтарное свечение и еле заметная сетка точек. */
+    public static final class Backdrop extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final Theme theme;
+
+        public Backdrop(Theme theme) {
+            this.theme = theme;
+            setOpaque(true);
+            setLayout(new java.awt.BorderLayout());
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            int w = getWidth();
+            int h = getHeight();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setPaint(new java.awt.GradientPaint(0, 0, brighten(theme.bg, 1.35f), 0, Math.max(1, h),
+                    theme.bg));
+            g2.fillRect(0, 0, w, h);
+
+            float radius = Math.max(w, h) * 0.8f;
+            g2.setPaint(new java.awt.RadialGradientPaint(
+                    new java.awt.geom.Point2D.Float(w * 0.72f, h * 0.02f), radius,
+                    new float[]{0f, 1f},
+                    new Color[]{withAlpha(theme.accent, 62), withAlpha(theme.accent, 0)}));
+            g2.fillRect(0, 0, w, h);
+
+            g2.setColor(withAlpha(theme.text, 13));
+            int step = 36;
+            for (int x = step; x < w; x += step) {
+                for (int y = step; y < h; y += step) {
+                    g2.fillOval(x, y, 2, 2);
+                }
+            }
+            g2.dispose();
+        }
+    }
+
+    /** Мягкое радиальное свечение вокруг иконки. */
+    public static final class Glow extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final Theme theme;
+
+        public Glow(Theme theme) {
+            this.theme = theme;
+            setOpaque(false);
+            setLayout(new java.awt.BorderLayout());
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth();
+            int h = getHeight();
+            float radius = Math.max(w, h) * 0.9f;
+            g2.setPaint(new java.awt.RadialGradientPaint(
+                    new java.awt.geom.Point2D.Float(w / 2f, h / 2f), radius,
+                    new float[]{0f, 1f},
+                    new Color[]{withAlpha(theme.accent, 70), withAlpha(theme.accent, 0)}));
+            g2.fillRect(0, 0, w, h);
+            g2.dispose();
+        }
+    }
+
+    static Color withAlpha(Color color, int alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    }
+
+    static Color brighten(Color color, float factor) {
+        return new Color(
+                Math.min(255, (int) (color.getRed() * factor)),
+                Math.min(255, (int) (color.getGreen() * factor)),
+                Math.min(255, (int) (color.getBlue() * factor)));
+    }
+
     /** Иконка окна: янтарный квадрат с буквой F — рисуется кодом, файлы не нужны. */
     public static BufferedImage appIcon() {
         int size = 128;

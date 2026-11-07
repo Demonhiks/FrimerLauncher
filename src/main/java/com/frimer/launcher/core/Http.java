@@ -51,6 +51,33 @@ public final class Http {
         return resp.body();
     }
 
+    /**
+     * GET с ручным проходом по редиректам, включая https → http.
+     *
+     * <p>Java намеренно не следует «понижающим» редиректам ({@link HttpClient.Redirect#NORMAL}),
+     * а Ely.by отдаёт скины именно так: 301 с https на http-хранилище.
+     */
+    public static byte[] getBytesFollowing(String url) {
+        String current = url;
+        for (int hop = 0; hop < 6; hop++) {
+            HttpResponse<byte[]> resp = send(current, Map.of(),
+                    HttpResponse.BodyHandlers.ofByteArray());
+            int code = resp.statusCode();
+            if (code >= 200 && code < 300) {
+                return resp.body();
+            }
+            if (code < 300 || code >= 400) {
+                throw new ApiException("HTTP " + code + " для " + url, code);
+            }
+            String location = resp.headers().firstValue("Location").orElse("");
+            if (location.isBlank()) {
+                throw new ApiException("HTTP " + code + " без Location для " + url, code);
+            }
+            current = URI.create(current).resolve(location).toString();
+        }
+        throw new ApiException("Слишком много редиректов для " + url, 0);
+    }
+
     /** POST с телом (JSON или form-urlencoded). */
     public static String post(String url, String body, String contentType,
                               Map<String, String> headers) {
